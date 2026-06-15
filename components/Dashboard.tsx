@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import SeasonCharts from "@/components/SeasonCharts";
 import type { Driver } from "@/lib/jolpica";
-import { teamColor, tyreColor } from "@/lib/season";
+import { teamCar, teamColor, tyreColor } from "@/lib/season";
 import type { CarResponse, DashboardResponse, Favorite } from "@/lib/types";
 
 export type TabKey = "results" | "car" | "charts";
@@ -99,11 +99,6 @@ export default function Dashboard({
                 <HeroStat label="우승" value={ds?.wins ?? "—"} />
               </div>
             </div>
-            <SeasonProgress
-              completed={data.completedRounds}
-              total={data.totalRounds}
-              accent={accent}
-            />
           </section>
 
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -178,74 +173,6 @@ export default function Dashboard({
   );
 }
 
-function SeasonProgress({
-  completed,
-  total,
-  accent,
-}: {
-  completed: number;
-  total: number;
-  accent: string;
-}) {
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-  // Keep the car fully visible inside the track at both extremes.
-  const carLeft = `calc(${Math.min(Math.max(pct, 0), 100)}% - 14px)`;
-
-  return (
-    <div className="mt-5">
-      <div className="mb-2 flex items-baseline justify-between text-xs">
-        <span className="font-semibold uppercase tracking-wide text-muted">
-          시즌 진행률
-        </span>
-        <span className="tabular-nums text-zinc-300">
-          {completed} / {total} 라운드 · {pct}%
-        </span>
-      </div>
-      <div className="relative h-2.5 rounded-full bg-black/40">
-        <div
-          className="h-2.5 rounded-full transition-[width] duration-500"
-          style={{ width: `${pct}%`, backgroundColor: accent }}
-        />
-        <RaceCar
-          className="absolute top-1/2 h-6 w-6 -translate-y-1/2 drop-shadow"
-          style={{ left: carLeft, color: accent }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// Minimalist top-down F1 car silhouette (front wing, cockpit, rear wing, wheels).
-function RaceCar({
-  className,
-  style,
-}: {
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <svg
-      viewBox="0 0 64 32"
-      fill="currentColor"
-      className={className}
-      style={style}
-      aria-hidden
-    >
-      {/* body */}
-      <path d="M6 16c0-2 2-3 5-3h10l6-4h6l2 4h12c4 0 7 1 9 3 -2 2-5 3-9 3H35l-2 4h-6l-6-4H11c-3 0-5-1-5-3z" />
-      {/* front wing */}
-      <rect x="2" y="11" width="4" height="10" rx="1" />
-      {/* rear wing */}
-      <rect x="58" y="9" width="4" height="14" rx="1" />
-      {/* wheels */}
-      <rect x="16" y="4" width="9" height="5" rx="2" fill="#18181b" />
-      <rect x="16" y="23" width="9" height="5" rx="2" fill="#18181b" />
-      <rect x="42" y="3" width="10" height="6" rx="2" fill="#18181b" />
-      <rect x="42" y="23" width="10" height="6" rx="2" fill="#18181b" />
-    </svg>
-  );
-}
-
 function CarPanel({
   ergDriver,
   constructorId,
@@ -303,28 +230,19 @@ function CarPanel({
 
       {car?.driver && (
         <div className="space-y-3">
-          {/* Identity — team-coloured number tile (driver photos from F1's CDN
-              are often outdated, so we render an accurate badge instead) */}
-          <div className="team-glow flex items-center gap-4 rounded-xl border border-line p-4">
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
-              <DriverHeadshot
-                constructorId={constructorId}
-                name={car.driver.fullName}
-                accent={accent}
-                className="h-full w-full"
-              />
-              <span
-                className="absolute bottom-0 right-0 rounded-tl-md px-1 py-0.5 font-display text-[10px] font-extrabold tabular-nums text-black"
-                style={{ backgroundColor: accent }}
-              >
-                {car.driver.number}
-              </span>
-            </div>
-            <div>
+          {/* Identity — driver info with the official F1 team car image */}
+          <div className="team-glow flex items-center justify-between gap-4 overflow-hidden rounded-xl border border-line p-4">
+            <div className="min-w-0">
               <p className="font-display text-lg font-bold leading-tight">
+                <span
+                  className="mr-2 font-mono text-sm font-extrabold tabular-nums"
+                  style={{ color: accent }}
+                >
+                  #{car.driver.number}
+                </span>
                 {car.driver.fullName}
               </p>
-              <p className="text-sm text-muted">
+              <p className="mt-0.5 text-sm text-muted">
                 {car.driver.teamName ?? ""}
                 {ergDriver?.nationality ? ` · ${ergDriver.nationality}` : ""}
                 {ergDriver?.dateOfBirth
@@ -332,6 +250,14 @@ function CarPanel({
                   : ""}
               </p>
             </div>
+            {teamCar(constructorId) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={teamCar(constructorId)!}
+                alt={`${car.driver.teamName ?? ""} 차량`}
+                className="h-14 w-auto max-w-[48%] shrink-0 object-contain sm:h-16"
+              />
+            ) : null}
           </div>
 
           {car.result && (

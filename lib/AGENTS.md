@@ -13,7 +13,7 @@ app's own API responses and persisted favorite.
 |------|-------------|
 | `jolpica.ts` | Server-side Jolpica/Ergast client. Domain types (`Driver`, `Constructor`, standings, `Race`, `RaceResult`, …) and helpers: `getDriverStandings`, `getConstructorStandings`, `getDriverResults`, `getSchedule`. Fetches with a 1-hour `revalidate` cache |
 | `openf1.ts` | Server-side [OpenF1](https://openf1.org) client for car data the Ergast schema lacks. Per-session/driver fetchers: `getLatestRaceSession`, `getSessionDrivers`, `getDriverLaps`, `getDriverPit`, `getDriverStints`, `getDriverPositions`, `getSessionResult`, `getSessionWeather`. 1-hour cache + 429 retry-with-backoff |
-| `season.ts` | `SEASON` constant (currently `"2026"`), `teamColor`, `teamLogo` (official 2026 white logo, all 11 teams), `driverHeadshot(constructorId, fullName)` (official F1 headshot; derives the `firstname3+lastname3+01` code, diacritics-stripped, with CDN fallback), and `tyreColor`. `F1_SLUG` maps constructorId → F1's separator-free media slug used by both logo and headshot URLs |
+| `season.ts` | `SEASON` constant (currently `"2026"`), `teamColor`, `teamLogo` (official 2026 white logo), `teamCar(constructorId)` (official F1 team car image; hyphenated `TEAM_CAR_SLUG`), `driverHeadshot(constructorId, fullName)` (official F1 headshot; derives the `firstname3+lastname3+01` code, diacritics-stripped, with CDN fallback), and `tyreColor`. `F1_SLUG` maps constructorId → F1's separator-free media slug used by logo/headshot URLs |
 | `types.ts` | Client/server shared types: `TeamOption`, `OptionsResponse`, `DashboardResponse`, `CarResponse`, `Favorite`, and the `FAVORITE_KEY` localStorage key |
 
 ## For AI Agents

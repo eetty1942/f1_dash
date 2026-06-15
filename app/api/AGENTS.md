@@ -12,7 +12,7 @@ error handling off the client and avoids any CORS concerns.
 ## Subdirectories
 | Directory | Route | Purpose |
 |-----------|-------|---------|
-| `options/` | `GET /api/options` | Returns `{ season, teams }` where each team carries its drivers; powers the first-run selector |
+| `options/` | `GET /api/options` | Returns `{ season, teams, completedRounds, totalRounds }`; each team carries its drivers; powers the selector and its season-progress bar |
 | `dashboard/` | `GET /api/dashboard?driver=<id>&team=<id>` | Returns driver + constructor standings, the driver's per-race results, the next race, and season progress (`completedRounds`/`totalRounds`) |
 | `car/` | `GET /api/car?code=<acronym>` | Categorized car details from OpenF1 for the latest completed race: identity, `result` (grid/finish/points/gap/status), `performance` (top speed, fastest/avg lap, best sectors), `tyres` (compounds, pit stops), `conditions` (weather). Calls are serialized to respect OpenF1 rate limits. Matches the driver by three-letter `code` |
 

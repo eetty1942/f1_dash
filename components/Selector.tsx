@@ -3,6 +3,7 @@
 import { TriangleAlert, X } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
 import DriverHeadshot from "@/components/DriverHeadshot";
+import SeasonProgress from "@/components/SeasonProgress";
 import { teamColor, teamLogo } from "@/lib/season";
 import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 
@@ -54,6 +55,14 @@ export default function Selector({
         팀을 고르면 소속 드라이버를 선택할 수 있어요. 선택은 이 브라우저에
         저장됩니다.
       </p>
+
+      <div className="mt-6 rounded-xl border border-line bg-surface p-4">
+        <SeasonProgress
+          completed={options.completedRounds}
+          total={options.totalRounds}
+          accent="#e10600"
+        />
+      </div>
 
       <div className="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4">
         {options.teams.map((t) => (

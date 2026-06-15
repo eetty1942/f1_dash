@@ -10,6 +10,9 @@ export interface TeamOption {
 export interface OptionsResponse {
   season: string;
   teams: TeamOption[];
+  // Season-wide progress (same for everyone) — shown on the team-selection page.
+  completedRounds: number;
+  totalRounds: number;
 }
 
 export interface DashboardResponse {
