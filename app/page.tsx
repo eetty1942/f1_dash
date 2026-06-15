@@ -47,8 +47,11 @@ export default function Home() {
     return <Intro season={SEASON} onStart={() => setPhase("select")} />;
   }
 
-  // Logo / brand click: return to the team-selection page (first-run picker).
+  // Logo / brand click: return to the team-selection page AND clear the saved
+  // favorite, so a refresh starts fresh from the intro (not the old detail).
   function goHome() {
+    localStorage.removeItem(FAVORITE_KEY);
+    setFavorite(null);
     setChangeOpen(false);
     setTab("results");
     setPhase("select");
