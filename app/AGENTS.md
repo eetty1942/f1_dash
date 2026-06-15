@@ -11,7 +11,7 @@ and the server-side API routes that proxy and shape Jolpica F1 data.
 ## Key Files
 | File | Description |
 |------|-------------|
-| `page.tsx` | Client home page; three-phase flow (`intro` → `select` → `dashboard`). First-time visitors see `Intro`; returning visitors with a saved favorite skip straight to `Dashboard`. Reset returns to `select` |
+| `page.tsx` | Client home page; three-phase flow (`intro` → `select` → `dashboard`). First-time visitors see `Intro`; returning visitors with a saved favorite skip straight to `Dashboard`. The top-bar "팀/드라이버 변경" opens `TeamDriverModal` in place (no navigation) |
 | `layout.tsx` | Root layout; Geist fonts, Korean metadata (title/description) |
 | `globals.css` | Tailwind v4 import + design tokens (surface/elevated/line/muted, `--team` accent), `.team-glow` panel, `.checkered` finish-line, and intro/`.rise-in` animations |
 | `favicon.ico` | App icon |

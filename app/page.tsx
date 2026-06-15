@@ -5,6 +5,7 @@ import AppShell from "@/components/AppShell";
 import Dashboard from "@/components/Dashboard";
 import Intro from "@/components/Intro";
 import Selector from "@/components/Selector";
+import TeamDriverModal from "@/components/TeamDriverModal";
 import { SEASON, teamColor } from "@/lib/season";
 import { FAVORITE_KEY, type Favorite } from "@/lib/types";
 
@@ -14,6 +15,7 @@ export default function Home() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [favorite, setFavorite] = useState<Favorite | null>(null);
   const [ready, setReady] = useState(false);
+  const [changeOpen, setChangeOpen] = useState(false);
 
   // Returning visitors with a saved favorite skip the intro and go straight to
   // their dashboard; first-time visitors see the intro.
@@ -34,13 +36,7 @@ export default function Home() {
     localStorage.setItem(FAVORITE_KEY, JSON.stringify(fav));
     setFavorite(fav);
     setPhase("dashboard");
-  }
-
-  // Reset returns to selection (not the intro — they're already in the app).
-  function reset() {
-    localStorage.removeItem(FAVORITE_KEY);
-    setFavorite(null);
-    setPhase("select");
+    setChangeOpen(false);
   }
 
   if (!ready) return null;
@@ -55,7 +51,7 @@ export default function Home() {
         accent={teamColor(favorite.constructorId)}
         right={
           <button
-            onClick={reset}
+            onClick={() => setChangeOpen(true)}
             className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-zinc-600 hover:text-zinc-200"
           >
             팀/드라이버 변경
@@ -63,6 +59,13 @@ export default function Home() {
         }
       >
         <Dashboard favorite={favorite} />
+        {changeOpen && (
+          <TeamDriverModal
+            current={favorite}
+            onClose={() => setChangeOpen(false)}
+            onSelect={select}
+          />
+        )}
       </AppShell>
     );
   }
