@@ -19,8 +19,26 @@ export default function Intro({
     <button
       onClick={onStart}
       aria-label="대시보드 시작"
-      className="group relative flex flex-1 w-full cursor-pointer flex-col items-center justify-center overflow-hidden bg-black text-white"
+      className="group relative flex w-full flex-1 cursor-pointer items-center justify-center overflow-hidden bg-black text-white"
     >
+      {/* background video (drop a licensed clip at public/intro.mp4 / .webm) */}
+      <video
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+      >
+        <source src="/intro.mp4" type="video/mp4" />
+        <source src="/intro.webm" type="video/webm" />
+      </video>
+
+      {/* readability overlay above the video, below the content */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/70" />
+
+      {/* foreground content */}
+      <div className="relative z-10 flex w-full flex-1 flex-col items-center justify-center">
       {/* speed streaks */}
       <div className="pointer-events-none absolute inset-0 opacity-40">
         {[0, 1, 2, 3, 4].map((i) => (
@@ -84,6 +102,7 @@ export default function Intro({
 
       {/* finish-line strip */}
       <div className="checkered intro-lights pointer-events-none absolute inset-x-0 bottom-0 h-4 opacity-80" />
+      </div>
     </button>
   );
 }
