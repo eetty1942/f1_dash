@@ -6,6 +6,7 @@ import Dashboard from "@/components/Dashboard";
 import Intro from "@/components/Intro";
 import Selector from "@/components/Selector";
 import TeamDriverModal from "@/components/TeamDriverModal";
+import type { TabKey } from "@/components/Dashboard";
 import { SEASON, teamColor } from "@/lib/season";
 import { FAVORITE_KEY, type Favorite } from "@/lib/types";
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [favorite, setFavorite] = useState<Favorite | null>(null);
   const [ready, setReady] = useState(false);
   const [changeOpen, setChangeOpen] = useState(false);
+  const [tab, setTab] = useState<TabKey>("results");
 
   // Returning visitors with a saved favorite skip the intro and go straight to
   // their dashboard; first-time visitors see the intro.
@@ -45,10 +47,18 @@ export default function Home() {
     return <Intro season={SEASON} onStart={() => setPhase("select")} />;
   }
 
+  // Logo / brand click: return to the main dashboard view (default tab, top).
+  function goHome() {
+    setChangeOpen(false);
+    setTab("results");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   if (phase === "dashboard" && favorite) {
     return (
       <AppShell
         accent={teamColor(favorite.constructorId)}
+        onHome={goHome}
         right={
           <button
             onClick={() => setChangeOpen(true)}
@@ -58,7 +68,7 @@ export default function Home() {
           </button>
         }
       >
-        <Dashboard favorite={favorite} />
+        <Dashboard favorite={favorite} tab={tab} onTabChange={setTab} />
         {changeOpen && (
           <TeamDriverModal
             current={favorite}

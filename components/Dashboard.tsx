@@ -19,12 +19,19 @@ import type { Driver } from "@/lib/jolpica";
 import { teamColor, tyreColor } from "@/lib/season";
 import type { CarResponse, DashboardResponse, Favorite } from "@/lib/types";
 
-type TabKey = "results" | "car" | "charts";
+export type TabKey = "results" | "car" | "charts";
 
-export default function Dashboard({ favorite }: { favorite: Favorite }) {
+export default function Dashboard({
+  favorite,
+  tab,
+  onTabChange,
+}: {
+  favorite: Favorite;
+  tab: TabKey;
+  onTabChange: (t: TabKey) => void;
+}) {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<TabKey>("results");
 
   useEffect(() => {
     let active = true;
@@ -113,7 +120,7 @@ export default function Dashboard({ favorite }: { favorite: Favorite }) {
             />
           </section>
 
-          <Tabs tab={tab} onChange={setTab} accent={accent} />
+          <Tabs tab={tab} onChange={onTabChange} accent={accent} />
 
           {tab === "results" && (
             <div className="rise-in space-y-5">
@@ -164,7 +171,7 @@ export default function Dashboard({ favorite }: { favorite: Favorite }) {
             </div>
           )}
 
-          <MobileTabBar tab={tab} onChange={setTab} accent={accent} />
+          <MobileTabBar tab={tab} onChange={onTabChange} accent={accent} />
         </>
       )}
     </div>
