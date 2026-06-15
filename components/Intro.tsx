@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { teamCar } from "@/lib/season";
+
+// A real F1 car image that streaks across at lights-out.
+const LAUNCH_CAR = teamCar("ferrari") ?? "";
 
 // F1-opening-style splash. Real start-light sequence (5 lights illuminate one
-// per second, then all go out together 2.5s later → "lights out"), looping.
+// per second, then all go out together 2.5s later → "lights out"); at lights-out
+// a car shoots diagonally across the screen, like a race launch. Loops.
 // The whole screen is clickable to skip to team selection.
 export default function Intro({
   season,
@@ -12,7 +17,7 @@ export default function Intro({
   season: string;
   onStart: () => void;
 }) {
-  const lit = useStartLights();
+  const { lit, launchKey } = useStartLights();
 
   return (
     <button
@@ -35,18 +40,17 @@ export default function Intro({
         ))}
       </div>
 
-      {/* streaking car silhouette */}
-      <div className="intro-car pointer-events-none absolute top-1/2 left-0 -translate-y-1/2">
-        <svg viewBox="0 0 64 32" className="h-10 w-20 text-red-600" fill="currentColor">
-          <path d="M6 16c0-2 2-3 5-3h10l6-4h6l2 4h12c4 0 7 1 9 3 -2 2-5 3-9 3H35l-2 4h-6l-6-4H11c-3 0-5-1-5-3z" />
-          <rect x="2" y="11" width="4" height="10" rx="1" />
-          <rect x="58" y="9" width="4" height="14" rx="1" />
-          <rect x="16" y="4" width="9" height="5" rx="2" fill="#0a0a0a" />
-          <rect x="16" y="23" width="9" height="5" rx="2" fill="#0a0a0a" />
-          <rect x="42" y="3" width="10" height="6" rx="2" fill="#0a0a0a" />
-          <rect x="42" y="23" width="10" height="6" rx="2" fill="#0a0a0a" />
-        </svg>
-      </div>
+      {/* car launch — fires diagonally across the screen at lights-out */}
+      {launchKey > 0 && LAUNCH_CAR ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={launchKey}
+          src={LAUNCH_CAR}
+          alt=""
+          aria-hidden
+          className="intro-launch pointer-events-none absolute left-0 top-[55%] z-20 h-16 w-auto drop-shadow-[0_10px_30px_rgba(0,0,0,0.7)] sm:h-24"
+        />
+      ) : null}
 
       {/* start lights */}
       <div className="intro-lights mb-8 flex gap-3">
@@ -87,10 +91,12 @@ export default function Intro({
   );
 }
 
-// Returns how many of the 5 lights are currently on. Lights illuminate one per
-// second (1→5), hold, then all go out together 2.5s later; the cycle repeats.
+// Drives the 5-light sequence. Lights illuminate one per second (1→5), hold,
+// then all go out together 2.5s later; `launchKey` increments at that lights-out
+// moment so the car animation can re-fire each cycle. The cycle repeats.
 function useStartLights() {
   const [lit, setLit] = useState(0);
+  const [launchKey, setLaunchKey] = useState(0);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -98,7 +104,10 @@ function useStartLights() {
 
     const run = () => {
       [1, 2, 3, 4, 5].forEach((n) => at((n - 1) * 1000, () => setLit(n)));
-      at(4000 + 2500, () => setLit(0)); // 2.5s after the 5th light → lights out
+      at(4000 + 2500, () => {
+        setLit(0); // 2.5s after the 5th light → lights out
+        setLaunchKey((k) => k + 1); // fire the car launch
+      });
       at(4000 + 2500 + 1500, run); // brief pause, then repeat
     };
     run();
@@ -106,5 +115,5 @@ function useStartLights() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  return lit;
+  return { lit, launchKey };
 }
