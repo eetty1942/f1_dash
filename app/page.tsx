@@ -47,10 +47,11 @@ export default function Home() {
     return <Intro season={SEASON} onStart={() => setPhase("select")} />;
   }
 
-  // Logo / brand click: return to the main dashboard view (default tab, top).
+  // Logo / brand click: return to the team-selection page (first-run picker).
   function goHome() {
     setChangeOpen(false);
     setTab("results");
+    setPhase("select");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
