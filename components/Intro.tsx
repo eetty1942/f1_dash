@@ -1,8 +1,10 @@
 "use client";
 
-// F1-opening-style splash. Cascading start lights, a streaking car, and a title
-// reveal, then "click to start" advances to team selection. The whole screen is
-// clickable so users can skip the animation.
+import { useEffect, useState } from "react";
+
+// F1-opening-style splash. Real start-light sequence (5 lights illuminate one
+// per second, then all go out together 2.5s later → "lights out"), looping.
+// The whole screen is clickable to skip to team selection.
 export default function Intro({
   season,
   onStart,
@@ -10,6 +12,8 @@ export default function Intro({
   season: string;
   onStart: () => void;
 }) {
+  const lit = useStartLights();
+
   return (
     <button
       onClick={onStart}
@@ -46,13 +50,19 @@ export default function Intro({
 
       {/* start lights */}
       <div className="intro-lights mb-8 flex gap-3">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span
-            key={i}
-            className="start-light h-6 w-6 rounded-full sm:h-7 sm:w-7"
-            style={{ animationDelay: `${i * 0.22}s` }}
-          />
-        ))}
+        {[0, 1, 2, 3, 4].map((i) => {
+          const on = i < lit;
+          return (
+            <span
+              key={i}
+              className="h-6 w-6 rounded-full transition-all duration-150 sm:h-7 sm:w-7"
+              style={{
+                backgroundColor: on ? "#e10600" : "#241012",
+                boxShadow: on ? "0 0 18px 3px rgba(225,6,0,0.85)" : "none",
+              }}
+            />
+          );
+        })}
       </div>
 
       <div className="relative z-10 px-6 text-center">
@@ -75,4 +85,26 @@ export default function Intro({
       <div className="checkered intro-lights pointer-events-none absolute inset-x-0 bottom-0 h-4 opacity-80" />
     </button>
   );
+}
+
+// Returns how many of the 5 lights are currently on. Lights illuminate one per
+// second (1→5), hold, then all go out together 2.5s later; the cycle repeats.
+function useStartLights() {
+  const [lit, setLit] = useState(0);
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const at = (ms: number, fn: () => void) => timers.push(setTimeout(fn, ms));
+
+    const run = () => {
+      [1, 2, 3, 4, 5].forEach((n) => at((n - 1) * 1000, () => setLit(n)));
+      at(4000 + 2500, () => setLit(0)); // 2.5s after the 5th light → lights out
+      at(4000 + 2500 + 1500, run); // brief pause, then repeat
+    };
+    run();
+
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return lit;
 }

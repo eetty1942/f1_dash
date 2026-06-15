@@ -60,10 +60,7 @@ export default function Dashboard({ favorite }: { favorite: Favorite }) {
           <section className="team-glow rise-in overflow-hidden rounded-2xl border border-line p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div className="flex items-center gap-4">
-                <div
-                  className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-elevated"
-                  style={{ borderColor: accent }}
-                >
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl">
                   <DriverHeadshot
                     constructorId={favorite.constructorId}
                     name={favorite.driverName}
@@ -302,10 +299,7 @@ function CarPanel({
           {/* Identity — team-coloured number tile (driver photos from F1's CDN
               are often outdated, so we render an accurate badge instead) */}
           <div className="team-glow flex items-center gap-4 rounded-xl border border-line p-4">
-            <div
-              className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border-2 bg-elevated"
-              style={{ borderColor: accent }}
-            >
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
               <DriverHeadshot
                 constructorId={constructorId}
                 name={car.driver.fullName}
