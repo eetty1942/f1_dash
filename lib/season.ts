@@ -53,27 +53,14 @@ export function teamLogo(constructorId: string | undefined): string | null {
   return `https://media.formula1.com/image/upload/c_lfill,w_96/q_auto/v1740000001/common/f1/2026/${slug}/2026${slug}logowhite.webp`;
 }
 
-// Official F1 team car image (side view). Uses F1's hyphenated team slug and a
-// Cloudinary fallback, so unknown teams still yield a generic car silhouette.
-const TEAM_CAR_SLUG: Record<string, string> = {
-  mercedes: "mercedes",
-  ferrari: "ferrari",
-  mclaren: "mclaren",
-  red_bull: "red-bull-racing",
-  alpine: "alpine",
-  rb: "racing-bulls",
-  haas: "haas-f1-team",
-  williams: "williams",
-  audi: "audi",
-  aston_martin: "aston-martin",
-  cadillac: "cadillac",
-};
-
+// Official F1 team car image — photographic, transparent background, side view.
+// Uses the same separator-free F1 slug as the logo/headshot, with a Cloudinary
+// fallback so unknown teams yield a generic car.
 export function teamCar(constructorId: string | undefined): string | null {
   if (!constructorId) return null;
-  const slug = TEAM_CAR_SLUG[constructorId];
+  const slug = F1_SLUG[constructorId];
   if (!slug) return null;
-  return `https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2026/${slug}.png`;
+  return `https://media.formula1.com/image/upload/c_lfill,w_512/q_auto/d_common:f1:2026:fallback:car:2026fallbackcarright.webp/v1740000001/common/f1/2026/${slug}/2026${slug}carright.webp`;
 }
 
 // Official F1 driver headshot. The 6-char code is firstname(3)+lastname(3); the
