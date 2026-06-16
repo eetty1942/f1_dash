@@ -127,6 +127,38 @@ export interface CompareResponse {
   series: Record<string, CompareRoundPoint[]>; // driverId → per-round points
 }
 
+// --- Constructor (team) comparison (per-season) --------------------------
+
+export interface CompareTeamDriver {
+  driverId: string;
+  name: string;
+  code: string | null;
+  points: number; // this driver's season points (race + sprint)
+}
+
+// A team's season summary with aggregate stats derived from results.
+export interface CompareTeam {
+  constructorId: string;
+  name: string;
+  position: number;
+  points: number;
+  wins: number;
+  podiums: number; // car finishes in P1–P3
+  fastestLaps: number; // race fastest-lap awards
+  oneTwos: number; // rounds with both cars in P1 & P2
+  dnfs: number; // non-classified finishes (R/D/W/…)
+  bestFinish: number | null; // best single-car finishing position
+  drivers: CompareTeamDriver[]; // season lineup, points desc
+}
+
+export interface CompareTeamsResponse {
+  season: string;
+  rounds: number;
+  teams: CompareTeam[]; // sorted by championship position
+  // constructorId → per-round (team points, cumulative, best finish that round)
+  series: Record<string, CompareRoundPoint[]>;
+}
+
 // The user's saved favorites, persisted in localStorage.
 export interface Favorite {
   constructorId: string;

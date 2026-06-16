@@ -2,7 +2,6 @@
 
 import {
   CalendarDays,
-  Construction,
   GitCompareArrows,
   Info,
   TriangleAlert,
@@ -13,6 +12,7 @@ import {
 import { type CSSProperties, useEffect, useState } from "react";
 import Banner, { type BannerItem } from "@/components/Banner";
 import ComingSoonModal from "@/components/ComingSoonModal";
+import CompareTeamsView from "@/components/CompareTeamsView";
 import CompareView from "@/components/CompareView";
 import ScheduleView from "@/components/ScheduleView";
 import DriverHeadshot from "@/components/DriverHeadshot";
@@ -167,9 +167,7 @@ export default function Selector({
         />
       )}
 
-      {view === "constructor-cmp" && (
-        <InlineComingSoon label={VIEW_TITLE["constructor-cmp"]} />
-      )}
+      {view === "constructor-cmp" && <CompareTeamsView season={season} />}
 
       {/* Bottom feature bar — switches the in-page view above (tab-like). */}
       <div className="mt-8">
@@ -364,19 +362,6 @@ function FeatureCard({
         {label}
       </span>
     </button>
-  );
-}
-
-// Temporary in-page placeholder for features not built yet (선수/컨스트럭터 비교).
-function InlineComingSoon({ label }: { label: string }) {
-  return (
-    <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-line bg-surface px-6 py-16 text-center">
-      <Construction className="h-7 w-7 text-muted" />
-      <p className="font-display text-base font-bold">{label} · 준비중</p>
-      <p className="max-w-xs text-sm text-muted">
-        해당 기능은 준비중입니다. 곧 항목별 상세 가이드와 함께 제공될 예정입니다.
-      </p>
-    </div>
   );
 }
 
