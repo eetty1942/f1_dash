@@ -99,9 +99,6 @@ export default function Intro({
       <p className="intro-cta absolute bottom-16 text-sm uppercase tracking-[0.25em] text-zinc-300">
         클릭하여 시작 ▸
       </p>
-
-      {/* finish-line strip */}
-      <div className="checkered intro-lights pointer-events-none absolute inset-x-0 bottom-0 h-4 opacity-80" />
       </div>
     </button>
   );

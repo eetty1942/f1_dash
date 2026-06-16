@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  Construction,
   GitCompareArrows,
   Info,
   TriangleAlert,
@@ -9,14 +10,10 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import {
-  type CSSProperties,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import Banner, { type BannerItem } from "@/components/Banner";
 import ComingSoonModal from "@/components/ComingSoonModal";
+import ScheduleView from "@/components/ScheduleView";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import SeasonProgress from "@/components/SeasonProgress";
 import { teamColor, teamLogo } from "@/lib/season";
@@ -32,6 +29,16 @@ const BANNERS: BannerItem[] = [
   },
 ];
 
+// In-page views switched by the bottom feature bar (tab-like, not modals).
+type ViewKey = "teams" | "schedule" | "driver-cmp" | "constructor-cmp";
+
+const VIEW_TITLE: Record<ViewKey, string> = {
+  teams: "팀을 선택하세요",
+  schedule: "시즌 일정",
+  "driver-cmp": "선수 비교",
+  "constructor-cmp": "컨스트럭터 비교",
+};
+
 // First-run screen: pick a team (logo grid) → a modal lists that team's drivers
 // with their official F1 headshots → choosing one saves the favorite.
 export default function Selector({
@@ -46,7 +53,13 @@ export default function Selector({
   const [modalTeam, setModalTeam] = useState<TeamOption | null>(null);
   // Feature name whose "coming soon" modal is open, or null when closed.
   const [comingSoon, setComingSoon] = useState<string | null>(null);
-  const teamGridRef = useRef<HTMLDivElement>(null);
+  // Which in-page view the bottom feature bar has switched to.
+  const [view, setView] = useState<ViewKey>("teams");
+
+  function changeView(v: ViewKey) {
+    setView(v);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   useEffect(() => {
     let active = true;
@@ -81,12 +94,14 @@ export default function Selector({
         {options.season} Season
       </p>
       <h1 className="mt-1.5 font-display text-3xl font-extrabold tracking-tight">
-        팀을 선택하세요
+        {VIEW_TITLE[view]}
       </h1>
-      <p className="mt-2 text-sm text-muted">
-        팀을 고르면 소속 드라이버를 선택할 수 있어요. 선택은 이 브라우저에
-        저장됩니다.
-      </p>
+      {view === "teams" && (
+        <p className="mt-2 text-sm text-muted">
+          팀을 고르면 소속 드라이버를 선택할 수 있어요. 선택은 이 브라우저에
+          저장됩니다.
+        </p>
+      )}
 
       <div className="mt-6 rounded-xl border border-line bg-surface p-4">
         <SeasonProgress
@@ -96,36 +111,47 @@ export default function Selector({
         />
       </div>
 
-      <div
-        ref={teamGridRef}
-        className="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4"
-      >
-        {options.teams.map((t) => (
-          <button
-            key={t.constructorId}
-            onClick={() => setModalTeam(t)}
-            className="group flex flex-col items-center gap-3 transition hover:-translate-y-1"
-          >
-            <div className="flex h-16 items-center justify-center">
-              <TeamLogo team={t} season={season} />
-            </div>
-            <span className="text-center text-xs font-semibold text-zinc-300 group-hover:text-foreground">
-              {t.name}
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* In-page content for the active feature (switched via the bar below). */}
+      {view === "teams" && (
+        <>
+          <div className="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4">
+            {options.teams.map((t) => (
+              <button
+                key={t.constructorId}
+                onClick={() => setModalTeam(t)}
+                className="group flex flex-col items-center gap-3 transition hover:-translate-y-1"
+              >
+                <div className="flex h-16 items-center justify-center">
+                  <TeamLogo team={t} season={season} />
+                </div>
+                <span className="text-center text-xs font-semibold text-zinc-300 group-hover:text-foreground">
+                  {t.name}
+                </span>
+              </button>
+            ))}
+          </div>
 
-      {/* Promo banner — auto-sliding; tapping opens a "coming soon" modal. */}
-      <div className="mt-8">
-        <Banner
-          items={BANNERS}
-          onItemClick={(item) => setComingSoon(item.title)}
-        />
-      </div>
+          {/* Promo banner — auto-sliding; tapping opens a "coming soon" modal. */}
+          <div className="mt-8">
+            <Banner
+              items={BANNERS}
+              onItemClick={(item) => setComingSoon(item.title)}
+            />
+          </div>
+        </>
+      )}
 
-      {/* Bottom feature launcher. 팀/상세정보 is the live flow (scrolls to the
-          team grid); the rest are placeholders that open a "coming soon" modal. */}
+      {view === "schedule" && (
+        <div className="mt-8">
+          <ScheduleView season={season} />
+        </div>
+      )}
+
+      {(view === "driver-cmp" || view === "constructor-cmp") && (
+        <InlineComingSoon label={VIEW_TITLE[view]} />
+      )}
+
+      {/* Bottom feature bar — switches the in-page view above (tab-like). */}
       <div className="mt-8">
         <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
           더 보기
@@ -134,25 +160,26 @@ export default function Selector({
           <FeatureCard
             icon={Info}
             label="팀/상세정보"
-            active
-            onClick={() =>
-              teamGridRef.current?.scrollIntoView({ behavior: "smooth" })
-            }
+            active={view === "teams"}
+            onClick={() => changeView("teams")}
           />
           <FeatureCard
             icon={CalendarDays}
             label="일정"
-            onClick={() => setComingSoon("일정")}
+            active={view === "schedule"}
+            onClick={() => changeView("schedule")}
           />
           <FeatureCard
             icon={Users}
             label="선수 비교"
-            onClick={() => setComingSoon("선수 비교")}
+            active={view === "driver-cmp"}
+            onClick={() => changeView("driver-cmp")}
           />
           <FeatureCard
             icon={GitCompareArrows}
             label="컨스트럭터 비교"
-            onClick={() => setComingSoon("컨스트럭터 비교")}
+            active={view === "constructor-cmp"}
+            onClick={() => changeView("constructor-cmp")}
           />
         </div>
       </div>
@@ -301,15 +328,35 @@ function FeatureCard({
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface px-3 py-4 text-center transition hover:-translate-y-0.5 hover:border-zinc-600"
+      aria-pressed={active}
+      className={`group flex flex-col items-center gap-2 rounded-xl border bg-surface px-3 py-4 text-center transition hover:-translate-y-0.5 ${
+        active ? "border-transparent bg-white/5" : "border-line hover:border-zinc-600"
+      }`}
+      style={active ? { boxShadow: "inset 0 0 0 1px #e10600" } : undefined}
     >
       <Icon
-        className={`h-5 w-5 ${active ? "text-team" : "text-muted group-hover:text-zinc-200"}`}
+        className="h-5 w-5"
+        style={{ color: active ? "#e10600" : undefined }}
       />
-      <span className="text-xs font-semibold text-zinc-300 group-hover:text-foreground">
+      <span
+        className={`text-xs font-semibold ${active ? "text-foreground" : "text-zinc-300 group-hover:text-foreground"}`}
+      >
         {label}
       </span>
     </button>
+  );
+}
+
+// Temporary in-page placeholder for features not built yet (선수/컨스트럭터 비교).
+function InlineComingSoon({ label }: { label: string }) {
+  return (
+    <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-line bg-surface px-6 py-16 text-center">
+      <Construction className="h-7 w-7 text-muted" />
+      <p className="font-display text-base font-bold">{label} · 준비중</p>
+      <p className="max-w-xs text-sm text-muted">
+        해당 기능은 준비중입니다. 곧 항목별 상세 가이드와 함께 제공될 예정입니다.
+      </p>
+    </div>
   );
 }
 

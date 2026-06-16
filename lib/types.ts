@@ -78,6 +78,26 @@ export interface CarResponse {
   } | null;
 }
 
+// One round shaped for the schedule dot-map: coordinates + display fields +
+// a derived status used to colour its marker.
+export interface ScheduleRound {
+  round: number;
+  raceName: string;
+  circuitName: string;
+  locality: string;
+  country: string;
+  lat: number;
+  long: number;
+  date: string;
+  time: string | null;
+  status: "past" | "next" | "upcoming";
+}
+
+export interface ScheduleResponse {
+  season: string;
+  rounds: ScheduleRound[];
+}
+
 // The user's saved favorites, persisted in localStorage.
 export interface Favorite {
   constructorId: string;
