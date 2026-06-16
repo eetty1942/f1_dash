@@ -15,14 +15,15 @@ import {
   type OpenF1Stint,
   type OpenF1Weather,
 } from "@/lib/openf1";
-import { SEASON } from "@/lib/season";
+import { resolveSeason } from "@/lib/season";
 import type { CarResponse } from "@/lib/types";
 
 // Categorized car/telemetry details for one driver, from the most recent
-// completed race. The driver is matched to OpenF1 by their three-letter code
-// (Ergast `code` == OpenF1 `name_acronym`), e.g. "NOR", "HAM".
+// completed race *of the requested season*. The driver is matched to OpenF1 by
+// their three-letter code (Ergast `code` == OpenF1 `name_acronym`), e.g. "NOR".
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const season = resolveSeason(request.nextUrl.searchParams.get("season"));
   if (!code) {
     return NextResponse.json(
       { error: "`code` query parameter is required." },
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const session = await getLatestRaceSession(SEASON);
+    const session = await getLatestRaceSession(season);
     if (!session) return NextResponse.json(empty());
 
     const sessionInfo = {

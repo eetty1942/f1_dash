@@ -246,7 +246,7 @@ function CarPanel({
     let active = true;
     setCar(null);
     setError(null);
-    fetch(`/api/car?code=${encodeURIComponent(code)}`)
+    fetch(`/api/car?code=${encodeURIComponent(code)}&season=${season}`)
       .then((res) => {
         if (!res.ok) throw new Error("차량 정보를 불러오지 못했습니다.");
         return res.json();
@@ -256,7 +256,7 @@ function CarPanel({
     return () => {
       active = false;
     };
-  }, [code]);
+  }, [code, season]);
 
   if (!code) return null;
 
@@ -279,7 +279,11 @@ function CarPanel({
         <StateMessage
           icon={Car}
           tone="muted"
-          text="최근 레이스의 차량 데이터가 아직 없습니다."
+          text={
+            Number(season) < 2023
+              ? "OpenF1는 2023 시즌부터 차량 데이터를 제공합니다."
+              : "이 시즌 레이스의 차량 데이터를 찾을 수 없습니다."
+          }
         />
       )}
 
