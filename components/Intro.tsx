@@ -37,8 +37,9 @@ export default function Intro({
       {/* readability overlay above the video, below the content */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-black/45 to-black/70" />
 
-      {/* foreground content */}
-      <div className="relative z-10 flex w-full flex-1 flex-col items-center justify-center">
+      {/* foreground content — fills the whole button so the bottom-anchored CTA
+          sits at the true bottom (not overlapping the centered title) */}
+      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
       {/* speed streaks */}
       <div className="pointer-events-none absolute inset-0 opacity-40">
         {[0, 1, 2, 3, 4].map((i) => (

@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ScheduleResponse, ScheduleRound } from "@/lib/types";
 
 const STATUS_LABEL: Record<ScheduleRound["status"], string> = {
@@ -71,6 +71,16 @@ export default function DotMap({
     };
   }, [season, roundsProp]);
 
+  // The ~4.7k landmass dots are static; memoize so selecting a pin / showing the
+  // popover doesn't re-create every circle.
+  const baseDots = useMemo(
+    () =>
+      dots?.points.map(([c, r], i) => (
+        <circle key={i} cx={c + 0.5} cy={r + 0.5} r={0.34} />
+      )) ?? null,
+    [dots],
+  );
+
   const rounds = roundsProp ?? sched?.rounds ?? [];
 
   if (!dots) {
@@ -97,11 +107,9 @@ export default function DotMap({
   return (
     <div className="relative rounded-xl border border-line bg-[#0b0b0e] p-2">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="시즌 일정 지도">
-        {/* base landmass dots */}
+        {/* base landmass dots (memoized) */}
         <g fill="#3f3f46" opacity="0.5">
-          {dots.points.map(([c, r], i) => (
-            <circle key={i} cx={c + 0.5} cy={r + 0.5} r={0.34} />
-          ))}
+          {baseDots}
         </g>
 
         {/* round markers */}

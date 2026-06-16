@@ -96,6 +96,14 @@ export default function CompareView({
     );
   }
 
+  if (data.rounds === 0 || data.drivers.length === 0) {
+    return (
+      <div className="mt-8 rounded-xl border border-line bg-surface px-6 py-12 text-center text-sm text-muted">
+        아직 이 시즌은 비교할 결과가 없습니다.
+      </div>
+    );
+  }
+
   const activeDrivers = data.drivers.filter((d) => active.has(d.driverId));
 
   function toggle(id: string) {
