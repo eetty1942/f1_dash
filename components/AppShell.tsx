@@ -33,7 +33,7 @@ export default function AppShell({
         value={season}
         onChange={(e) => onSeasonChange(e.target.value)}
         aria-label="시즌 선택"
-        className="ml-1 cursor-pointer rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] font-medium text-muted transition hover:border-zinc-600 hover:text-zinc-200 focus:outline-none"
+        className="ml-1 cursor-pointer rounded-full border border-line bg-surface px-2 py-0.5 text-[11px] font-medium text-muted transition hover:border-zinc-600 hover:text-zinc-200"
       >
         {seasons.map((s) => (
           <option key={s} value={s} className="bg-surface text-foreground">

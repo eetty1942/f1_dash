@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUpRight, TriangleAlert } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { teamColor } from "@/lib/season";
+import { useFetch } from "@/lib/useFetch";
 import type { CompareDriver, CompareResponse } from "@/lib/types";
 
 const DEFAULT_TOP = 8;
@@ -28,29 +29,23 @@ export default function CompareView({
   season: string;
   onDriverSelect?: (d: CompareDriver) => void;
 }) {
-  const [data, setData] = useState<CompareResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [active, setActive] = useState<Set<string>>(new Set());
+  const { data, error } = useFetch<CompareResponse>(
+    `/api/compare?season=${season}`,
+    "비교 데이터를 불러오지 못했습니다.",
+  );
 
-  useEffect(() => {
-    let on = true;
-    setData(null);
-    setError(null);
-    fetch(`/api/compare?season=${season}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("비교 데이터를 불러오지 못했습니다.");
-        return r.json();
-      })
-      .then((d: CompareResponse) => {
-        if (!on) return;
-        setData(d);
-        setActive(new Set(d.drivers.slice(0, DEFAULT_TOP).map((x) => x.driverId)));
-      })
-      .catch((e: Error) => on && setError(e.message));
-    return () => {
-      on = false;
-    };
-  }, [season]);
+  // Visible drivers: defaults to the top N; user toggles are kept per-season so
+  // switching seasons cleanly falls back to that season's default.
+  const defaultActive = useMemo(
+    () =>
+      new Set(data?.drivers.slice(0, DEFAULT_TOP).map((d) => d.driverId) ?? []),
+    [data],
+  );
+  const [override, setOverride] = useState<{ season: string; set: Set<string> } | null>(
+    null,
+  );
+  const active =
+    override && override.season === season ? override.set : defaultActive;
 
   const styles = useMemo(() => styleFor(data?.drivers ?? []), [data]);
 
@@ -107,12 +102,10 @@ export default function CompareView({
   const activeDrivers = data.drivers.filter((d) => active.has(d.driverId));
 
   function toggle(id: string) {
-    setActive((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(active);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setOverride({ season, set: next });
   }
 
   return (

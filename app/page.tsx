@@ -30,7 +30,10 @@ export default function Home() {
   // Returning visitors with a saved favorite skip the intro and go straight to
   // their dashboard; first-time visitors see the intro. Restore the last-used
   // season too (validated against the current selectable window).
+  // One-time hydration-safe init reading localStorage (must run after mount, not
+  // during render, to avoid an SSR mismatch) — setState here is correct.
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- hydration-safe one-time init */
     try {
       const raw = localStorage.getItem(FAVORITE_KEY);
       if (raw) {
@@ -42,6 +45,7 @@ export default function Home() {
       // ignore malformed storage
     }
     setReady(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   function setSeason(next: string) {

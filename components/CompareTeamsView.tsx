@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronRight, Swords, TriangleAlert, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -16,6 +16,7 @@ import {
 import DriverHeadshot from "@/components/DriverHeadshot";
 import TeamVsTeam from "@/components/TeamVsTeam";
 import { teamColor } from "@/lib/season";
+import { useFetch } from "@/lib/useFetch";
 import type {
   CompareRoundPoint,
   CompareTeam,
@@ -26,31 +27,23 @@ import type {
 // line + points-per-round scatter, with team toggles (all on by default). A
 // row's chevron opens that team's inline detail panel (onTeamSelect).
 export default function CompareTeamsView({ season }: { season: string }) {
-  const [data, setData] = useState<CompareTeamsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [active, setActive] = useState<Set<string>>(new Set());
+  const { data, error } = useFetch<CompareTeamsResponse>(
+    `/api/compare-teams?season=${season}`,
+    "팀 비교 데이터를 불러오지 못했습니다.",
+  );
   const [detailId, setDetailId] = useState<string | null>(null);
   const [vsOpen, setVsOpen] = useState(false);
 
-  useEffect(() => {
-    let on = true;
-    setData(null);
-    setError(null);
-    fetch(`/api/compare-teams?season=${season}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("팀 비교 데이터를 불러오지 못했습니다.");
-        return r.json();
-      })
-      .then((d: CompareTeamsResponse) => {
-        if (!on) return;
-        setData(d);
-        setActive(new Set(d.teams.map((t) => t.constructorId)));
-      })
-      .catch((e: Error) => on && setError(e.message));
-    return () => {
-      on = false;
-    };
-  }, [season]);
+  // Visible teams default to all; user toggles are kept per-season.
+  const defaultActive = useMemo(
+    () => new Set(data?.teams.map((t) => t.constructorId) ?? []),
+    [data],
+  );
+  const [override, setOverride] = useState<{ season: string; set: Set<string> } | null>(
+    null,
+  );
+  const active =
+    override && override.season === season ? override.set : defaultActive;
 
   const cumData = useMemo(() => {
     if (!data) return [];
@@ -98,12 +91,10 @@ export default function CompareTeamsView({ season }: { season: string }) {
   const activeTeams = data.teams.filter((t) => active.has(t.constructorId));
 
   function toggle(id: string) {
-    setActive((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    const next = new Set(active);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setOverride({ season, set: next });
   }
 
   const detail = data.teams.find((t) => t.constructorId === detailId) ?? null;

@@ -4,6 +4,7 @@ import { ChevronLeft, TriangleAlert, X } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import { teamColor, teamLogo } from "@/lib/season";
+import { useFetch } from "@/lib/useFetch";
 import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 
 // Two-step modal for changing the favorite from within the dashboard:
@@ -19,26 +20,11 @@ export default function TeamDriverModal({
   onClose: () => void;
   onSelect: (fav: Favorite) => void;
 }) {
-  const [options, setOptions] = useState<OptionsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data: options, error } = useFetch<OptionsResponse>(
+    `/api/options?season=${season}`,
+    "옵션을 불러오지 못했습니다.",
+  );
   const [team, setTeam] = useState<TeamOption | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setOptions(null);
-    setError(null);
-    setTeam(null);
-    fetch(`/api/options?season=${season}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("옵션을 불러오지 못했습니다.");
-        return res.json();
-      })
-      .then((d: OptionsResponse) => active && setOptions(d))
-      .catch((err: Error) => active && setError(err.message));
-    return () => {
-      active = false;
-    };
-  }, [season]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();

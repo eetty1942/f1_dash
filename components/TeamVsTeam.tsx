@@ -175,7 +175,7 @@ function TeamSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full cursor-pointer bg-transparent text-sm font-semibold focus:outline-none"
+        className="w-full cursor-pointer rounded bg-transparent text-sm font-semibold"
       >
         {options.map((t) => (
           <option

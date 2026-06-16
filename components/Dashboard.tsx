@@ -14,12 +14,13 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useState } from "react";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import OneVsOne from "@/components/OneVsOne";
 import SeasonCharts from "@/components/SeasonCharts";
 import type { Driver } from "@/lib/jolpica";
 import { teamCar, teamColor, tyreColor } from "@/lib/season";
+import { useFetch } from "@/lib/useFetch";
 import type { CarResponse, DashboardResponse, Favorite } from "@/lib/types";
 
 export type TabKey = "results" | "car" | "charts";
@@ -35,30 +36,16 @@ export default function Dashboard({
   tab: TabKey;
   onTabChange: (t: TabKey) => void;
 }) {
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const params = new URLSearchParams({
+    driver: favorite.driverId,
+    team: favorite.constructorId,
+    season,
+  });
+  const { data, error } = useFetch<DashboardResponse>(
+    `/api/dashboard?${params}`,
+    "데이터를 불러오지 못했습니다.",
+  );
   const [vsOpen, setVsOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    setData(null);
-    setError(null);
-    const params = new URLSearchParams({
-      driver: favorite.driverId,
-      team: favorite.constructorId,
-      season,
-    });
-    fetch(`/api/dashboard?${params}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("데이터를 불러오지 못했습니다.");
-        return res.json();
-      })
-      .then((d: DashboardResponse) => active && setData(d))
-      .catch((err: Error) => active && setError(err.message));
-    return () => {
-      active = false;
-    };
-  }, [favorite.driverId, favorite.constructorId, season]);
 
   const ds = data?.driverStanding ?? null;
   const cs = data?.constructorStanding ?? null;
@@ -238,25 +225,10 @@ function CarPanel({
   accent: string;
 }) {
   const code = ergDriver?.code ?? null;
-  const [car, setCar] = useState<CarResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!code) return;
-    let active = true;
-    setCar(null);
-    setError(null);
-    fetch(`/api/car?code=${encodeURIComponent(code)}&season=${season}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("차량 정보를 불러오지 못했습니다.");
-        return res.json();
-      })
-      .then((d: CarResponse) => active && setCar(d))
-      .catch((err: Error) => active && setError(err.message));
-    return () => {
-      active = false;
-    };
-  }, [code, season]);
+  const { data: car, error } = useFetch<CarResponse>(
+    code ? `/api/car?code=${encodeURIComponent(code)}&season=${season}` : null,
+    "차량 정보를 불러오지 못했습니다.",
+  );
 
   if (!code) return null;
 

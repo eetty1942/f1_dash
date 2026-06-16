@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useFetch } from "@/lib/useFetch";
 import type { ScheduleResponse, ScheduleRound } from "@/lib/types";
 
 const STATUS_LABEL: Record<ScheduleRound["status"], string> = {
@@ -49,7 +50,6 @@ export default function DotMap({
   onClear?: () => void;
 }) {
   const [dots, setDots] = useState<DotData | null>(null);
-  const [sched, setSched] = useState<ScheduleResponse | null>(null);
 
   useEffect(() => {
     fetch("/dotmap/world-dots.json")
@@ -58,18 +58,10 @@ export default function DotMap({
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    if (roundsProp || !season) return;
-    let active = true;
-    setSched(null);
-    fetch(`/api/schedule?season=${season}`)
-      .then((r) => r.json())
-      .then((d: ScheduleResponse) => active && setSched(d))
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [season, roundsProp]);
+  // Only fetch the schedule when the parent doesn't supply rounds.
+  const fetched = useFetch<ScheduleResponse>(
+    !roundsProp && season ? `/api/schedule?season=${season}` : null,
+  );
 
   // The ~4.7k landmass dots are static; memoize so selecting a pin / showing the
   // popover doesn't re-create every circle.
@@ -81,7 +73,7 @@ export default function DotMap({
     [dots],
   );
 
-  const rounds = roundsProp ?? sched?.rounds ?? [];
+  const rounds = roundsProp ?? fetched.data?.rounds ?? [];
 
   if (!dots) {
     return (

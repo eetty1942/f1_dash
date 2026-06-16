@@ -1,8 +1,9 @@
 "use client";
 
 import { TriangleAlert } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import DotMap from "@/components/DotMap";
+import { useFetch } from "@/lib/useFetch";
 import type { ScheduleResponse, ScheduleRound } from "@/lib/types";
 
 const STATUS_DOT: Record<ScheduleRound["status"], string> = {
@@ -20,30 +21,23 @@ export default function ScheduleView({
   season: string;
   accent?: string;
 }) {
-  const [data, setData] = useState<ScheduleResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
+  const { data, error } = useFetch<ScheduleResponse>(
+    `/api/schedule?season=${season}`,
+    "일정을 불러오지 못했습니다.",
+  );
 
-  useEffect(() => {
-    let active = true;
-    setData(null);
-    setError(null);
-    fetch(`/api/schedule?season=${season}`)
-      .then((r) => {
-        if (!r.ok) throw new Error("일정을 불러오지 못했습니다.");
-        return r.json();
-      })
-      .then((d: ScheduleResponse) => {
-        if (!active) return;
-        setData(d);
-        const next = d.rounds.find((r) => r.status === "next");
-        setSelected((next ?? d.rounds[0])?.round ?? null);
-      })
-      .catch((e: Error) => active && setError(e.message));
-    return () => {
-      active = false;
-    };
-  }, [season]);
+  const rounds = useMemo(() => data?.rounds ?? [], [data]);
+  // Default selection = the next race (else first); user picks kept per-season.
+  const defaultSelected = useMemo(() => {
+    const next = rounds.find((r) => r.status === "next");
+    return (next ?? rounds[0])?.round ?? null;
+  }, [rounds]);
+  const [override, setOverride] = useState<{ season: string; round: number | null } | null>(
+    null,
+  );
+  const selected =
+    override && override.season === season ? override.round : defaultSelected;
+  const pick = (round: number | null) => setOverride({ season, round });
 
   if (error) {
     return (
@@ -54,8 +48,6 @@ export default function ScheduleView({
     );
   }
 
-  const rounds = data?.rounds ?? [];
-
   return (
     <div className="space-y-4">
       <DotMap
@@ -63,8 +55,8 @@ export default function ScheduleView({
         accent={accent}
         selectedRound={selected}
         detailPopover
-        onSelect={(r) => setSelected(r.round)}
-        onClear={() => setSelected(null)}
+        onSelect={(r) => pick(r.round)}
+        onClear={() => pick(null)}
       />
 
       {/* Legend */}
@@ -97,7 +89,7 @@ export default function ScheduleView({
               return (
                 <li key={r.round}>
                   <button
-                    onClick={() => setSelected(r.round)}
+                    onClick={() => pick(r.round)}
                     className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition ${
                       isSel
                         ? "border-transparent bg-white/5"

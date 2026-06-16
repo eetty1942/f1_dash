@@ -18,6 +18,7 @@ import ScheduleView from "@/components/ScheduleView";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import SeasonProgress from "@/components/SeasonProgress";
 import { teamColor, teamLogo } from "@/lib/season";
+import { useFetch } from "@/lib/useFetch";
 import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 
 // Promo banners shown below the team grid. Today there is one sample; more can
@@ -54,8 +55,10 @@ export default function Selector({
   // Navigate to a driver's detail page, remembering the comparison origin.
   onDriverDetail?: (fav: Favorite) => void;
 }) {
-  const [options, setOptions] = useState<OptionsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data: options, error } = useFetch<OptionsResponse>(
+    `/api/options?season=${season}`,
+    "옵션을 불러오지 못했습니다.",
+  );
   const [modalTeam, setModalTeam] = useState<TeamOption | null>(null);
   // Feature name whose "coming soon" modal is open, or null when closed.
   const [comingSoon, setComingSoon] = useState<string | null>(null);
@@ -66,22 +69,6 @@ export default function Selector({
     setView(v);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-
-  useEffect(() => {
-    let active = true;
-    setOptions(null);
-    setError(null);
-    fetch(`/api/options?season=${season}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("옵션을 불러오지 못했습니다.");
-        return res.json();
-      })
-      .then((data: OptionsResponse) => active && setOptions(data))
-      .catch((err: Error) => active && setError(err.message));
-    return () => {
-      active = false;
-    };
-  }, [season]);
 
   if (error) {
     return (

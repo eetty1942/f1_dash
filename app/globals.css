@@ -173,6 +173,26 @@ body {
   animation: riseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ---- Accessibility ---- */
+
+/* Visible focus ring for keyboard users only (not on mouse/touch). */
+:focus-visible {
+  outline: 2px solid var(--team);
+  outline-offset: 2px;
+}
+
+/* Respect users who prefer reduced motion: neutralize animations/transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Checkered finish-line pattern (two-row chequered flag). */
 .checkered {
   background-image:
