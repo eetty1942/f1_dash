@@ -9,12 +9,14 @@ import {
   Flag,
   Gauge,
   MapPin,
+  Plus,
   TriangleAlert,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
 import DriverHeadshot from "@/components/DriverHeadshot";
+import OneVsOne from "@/components/OneVsOne";
 import SeasonCharts from "@/components/SeasonCharts";
 import type { Driver } from "@/lib/jolpica";
 import { teamCar, teamColor, tyreColor } from "@/lib/season";
@@ -35,6 +37,7 @@ export default function Dashboard({
 }) {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [vsOpen, setVsOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -194,6 +197,30 @@ export default function Dashboard({
 
           <MobileTabBar tab={tab} onChange={onTabChange} accent={accent} />
         </>
+      )}
+
+      {/* Floating action: 1:1 compare the viewed driver with another. */}
+      {data && (
+        <button
+          onClick={() => setVsOpen(true)}
+          className="fixed left-1/2 top-[68px] z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold shadow-lg backdrop-blur transition hover:brightness-125"
+          style={{
+            borderColor: accent,
+            backgroundColor: "rgba(9,9,11,0.85)",
+            color: accent,
+          }}
+        >
+          <Plus className="h-4 w-4" />
+          다른 드라이버와 비교하기
+        </button>
+      )}
+
+      {vsOpen && (
+        <OneVsOne
+          season={season}
+          currentId={favorite.driverId}
+          onClose={() => setVsOpen(false)}
+        />
       )}
     </div>
   );

@@ -88,6 +88,7 @@ export interface Race {
   date: string;
   time?: string;
   Results?: RaceResult[];
+  SprintResults?: RaceResult[];
 }
 
 // ---------------------------------------------------------------------------
@@ -148,4 +149,69 @@ export async function getSchedule(season: string): Promise<Race[]> {
     MRData: { RaceTable: { Races: Race[] } };
   }>(`${season}.json?limit=100`);
   return data.MRData.RaceTable.Races ?? [];
+}
+
+// All race results for a season (every driver, every round). Ergast paginates
+// by *result row*, so a single race's Results can span pages — we merge by
+// round. Used to build per-driver season trends for the comparison view.
+export async function getSeasonResults(season: string): Promise<Race[]> {
+  const limit = 100;
+  const byRound = new Map<string, Race>();
+  let offset = 0;
+  let total = Infinity;
+
+  while (offset < total) {
+    const data = await get<{
+      MRData: { total: string; RaceTable: { Races: Race[] } };
+    }>(`${season}/results.json?limit=${limit}&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races ?? [];
+    if (races.length === 0) break;
+    for (const race of races) {
+      const existing = byRound.get(race.round);
+      if (existing) {
+        existing.Results = [...(existing.Results ?? []), ...(race.Results ?? [])];
+      } else {
+        byRound.set(race.round, { ...race, Results: [...(race.Results ?? [])] });
+      }
+    }
+    offset += limit;
+  }
+
+  return [...byRound.values()].sort((a, b) => Number(a.round) - Number(b.round));
+}
+
+// Sprint results for a season (points scored on sprint Saturdays, counted
+// separately from the main race). Same paginate-and-merge-by-round shape.
+export async function getSeasonSprintResults(season: string): Promise<Race[]> {
+  const limit = 100;
+  const byRound = new Map<string, Race>();
+  let offset = 0;
+  let total = Infinity;
+
+  while (offset < total) {
+    const data = await get<{
+      MRData: { total: string; RaceTable: { Races: Race[] } };
+    }>(`${season}/sprint.json?limit=${limit}&offset=${offset}`);
+    total = Number(data.MRData.total);
+    const races = data.MRData.RaceTable.Races ?? [];
+    if (races.length === 0) break;
+    for (const race of races) {
+      const existing = byRound.get(race.round);
+      if (existing) {
+        existing.SprintResults = [
+          ...(existing.SprintResults ?? []),
+          ...(race.SprintResults ?? []),
+        ];
+      } else {
+        byRound.set(race.round, {
+          ...race,
+          SprintResults: [...(race.SprintResults ?? [])],
+        });
+      }
+    }
+    offset += limit;
+  }
+
+  return [...byRound.values()].sort((a, b) => Number(a.round) - Number(b.round));
 }

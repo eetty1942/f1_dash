@@ -98,6 +98,35 @@ export interface ScheduleResponse {
   rounds: ScheduleRound[];
 }
 
+// --- Driver comparison (per-season) -------------------------------------
+
+// One driver's season summary, used for the comparison legend/colours.
+export interface CompareDriver {
+  driverId: string;
+  name: string;
+  code: string | null;
+  constructorId: string;
+  constructorName: string;
+  position: number;
+  points: number;
+  wins: number;
+}
+
+// One driver's result in a single round of the season.
+export interface CompareRoundPoint {
+  round: number;
+  points: number; // points scored that race
+  cumulative: number; // running championship total
+  finishPos: number | null; // numeric finishing position, or null (DNF/DSQ/…)
+}
+
+export interface CompareResponse {
+  season: string;
+  rounds: number; // number of rounds that have results
+  drivers: CompareDriver[]; // sorted by championship position
+  series: Record<string, CompareRoundPoint[]>; // driverId → per-round points
+}
+
 // The user's saved favorites, persisted in localStorage.
 export interface Favorite {
   constructorId: string;

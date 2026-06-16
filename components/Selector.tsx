@@ -13,6 +13,7 @@ import {
 import { type CSSProperties, useEffect, useState } from "react";
 import Banner, { type BannerItem } from "@/components/Banner";
 import ComingSoonModal from "@/components/ComingSoonModal";
+import CompareView from "@/components/CompareView";
 import ScheduleView from "@/components/ScheduleView";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import SeasonProgress from "@/components/SeasonProgress";
@@ -30,7 +31,7 @@ const BANNERS: BannerItem[] = [
 ];
 
 // In-page views switched by the bottom feature bar (tab-like, not modals).
-type ViewKey = "teams" | "schedule" | "driver-cmp" | "constructor-cmp";
+export type ViewKey = "teams" | "schedule" | "driver-cmp" | "constructor-cmp";
 
 const VIEW_TITLE: Record<ViewKey, string> = {
   teams: "팀을 선택하세요",
@@ -43,10 +44,15 @@ const VIEW_TITLE: Record<ViewKey, string> = {
 // with their official F1 headshots → choosing one saves the favorite.
 export default function Selector({
   season,
+  initialView = "teams",
   onSelect,
+  onDriverDetail,
 }: {
   season: string;
+  initialView?: ViewKey;
   onSelect: (fav: Favorite) => void;
+  // Navigate to a driver's detail page, remembering the comparison origin.
+  onDriverDetail?: (fav: Favorite) => void;
 }) {
   const [options, setOptions] = useState<OptionsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +60,7 @@ export default function Selector({
   // Feature name whose "coming soon" modal is open, or null when closed.
   const [comingSoon, setComingSoon] = useState<string | null>(null);
   // Which in-page view the bottom feature bar has switched to.
-  const [view, setView] = useState<ViewKey>("teams");
+  const [view, setView] = useState<ViewKey>(initialView);
 
   function changeView(v: ViewKey) {
     setView(v);
@@ -147,8 +153,22 @@ export default function Selector({
         </div>
       )}
 
-      {(view === "driver-cmp" || view === "constructor-cmp") && (
-        <InlineComingSoon label={VIEW_TITLE[view]} />
+      {view === "driver-cmp" && (
+        <CompareView
+          season={season}
+          onDriverSelect={(d) =>
+            (onDriverDetail ?? onSelect)({
+              constructorId: d.constructorId,
+              teamName: d.constructorName,
+              driverId: d.driverId,
+              driverName: d.name,
+            })
+          }
+        />
+      )}
+
+      {view === "constructor-cmp" && (
+        <InlineComingSoon label={VIEW_TITLE["constructor-cmp"]} />
       )}
 
       {/* Bottom feature bar — switches the in-page view above (tab-like). */}
