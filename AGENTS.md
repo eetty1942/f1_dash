@@ -1,4 +1,4 @@
-<!-- Generated: 2026-06-15 | Updated: 2026-06-15 -->
+<!-- Generated: 2026-06-15 | Updated: 2026-06-17 -->
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
@@ -9,30 +9,34 @@ This version has breaking changes — APIs, conventions, and file structure may 
 # f1_dash
 
 ## Purpose
-A web dashboard that shows the current-season standings and race results for a
-user's favorite F1 team and driver. On first visit the user picks a team, then a
-driver; the choice is saved in `localStorage` and the dashboard renders that
-driver's championship position, points, wins, the constructor's position, the
-next race, and a per-round results table. Data comes from the free, key-less
-[Jolpica F1 API](https://github.com/jolpica/jolpica-f1) (Ergast successor).
+A web dashboard for a user's favorite F1 team and driver. The user picks a team
+then a driver (saved in `localStorage`) and sees that driver's standings, race
+results, next race, car telemetry, and trend charts. A header **season picker**
+(last 5 seasons) re-scopes everything to the chosen year — including the driver's
+actual team and per-season imagery. Also includes a dotted-map **schedule** view
+and per-season **driver/constructor comparison** (charts + 1:1 head-to-head).
+Data: [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) (Ergast successor)
+and [OpenF1](https://openf1.org) — both free and key-less.
 
 ## Key Files
 | File | Description |
 |------|-------------|
-| `package.json` | Dependencies and scripts (`dev`, `build`, `start`, `lint`) |
+| `package.json` | Dependencies and scripts (`dev`, `build`, `start`, `lint`, `test`) |
 | `next.config.ts` | Next config; pins `turbopack.root` to this dir |
 | `tsconfig.json` | TypeScript config; `@/*` import alias maps to repo root |
 | `eslint.config.mjs` | ESLint (eslint-config-next) flat config |
 | `postcss.config.mjs` | Tailwind v4 PostCSS plugin |
+| `vitest.config.ts` | Vitest config (mirrors the `@/*` alias) |
 | `README.md` | Project overview, run instructions, structure (Korean) |
 
 ## Subdirectories
 | Directory | Purpose |
 |-----------|---------|
 | `app/` | Next.js App Router pages, layout, and API routes (see `app/AGENTS.md`) |
-| `components/` | Client React components for selection and dashboard (see `components/AGENTS.md`) |
-| `lib/` | API client, season config, shared types (see `lib/AGENTS.md`) |
-| `public/` | Static SVG assets from the scaffold (no app logic) |
+| `components/` | Client React components (selection, dashboard, schedule, comparisons; see `components/AGENTS.md`) |
+| `lib/` | API clients, season/media config, aggregation, shared types, `useFetch` (see `lib/AGENTS.md`) |
+| `scripts/` | One-off asset generators: `fetch-headshots.mjs`, `gen-dotmap.mjs` |
+| `public/` | Static assets, incl. generated `headshots/` (driver portraits) and `dotmap/` (world-dots.json) |
 
 ## For AI Agents
 
@@ -44,25 +48,30 @@ next race, and a per-round results table. Data comes from the free, key-less
 
 ### Testing Requirements
 - `npm run build` runs the production build + TypeScript check; keep it green.
-- `npm run lint` runs ESLint.
-- Manual smoke test: `npm run dev`, then verify `/api/options` and
-  `/api/dashboard?driver=<id>&team=<id>` return data and the page renders.
+- `npm run lint` runs ESLint (keep it clean — fetch in components via `useFetch`).
+- `npm test` runs vitest (`lib/compute`, `lib/season` helpers).
+- Manual smoke test: `npm run dev`, then verify the `/api/*` routes return data
+  (e.g. `/api/compare?season=2024`) and the page renders.
 
 ### Common Patterns
-- Server-only data fetching lives in `lib/jolpica.ts`; route handlers in
-  `app/api/**` call it and shape responses for the client.
-- Client components fetch from the app's own `/api/*` routes (never Jolpica
-  directly), keeping caching and error handling on the server.
+- Server-only data fetching lives in `lib/jolpica.ts` / `lib/openf1.ts`; route
+  handlers in `app/api/**` call them, fold in pure logic from `lib/compute.ts`,
+  and shape responses for the client.
+- Client components fetch the app's own `/api/*` routes via `lib/useFetch.ts`
+  (never upstream directly), keeping caching and error handling on the server.
+- Every route is season-scoped (`resolveSeason`); per-season imagery/headshots
+  come from `lib/season.ts` with locally-stored assets preferred.
 
 ## Dependencies
 
 ### External
 - `next` 16 — framework (App Router, Turbopack)
 - `react` / `react-dom` 19 — UI
-- `recharts` — season trend charts
+- `recharts` — trend/comparison charts
 - `lucide-react` — icons
 - `tailwindcss` v4 — styling
-- Jolpica F1 API (`https://api.jolpi.ca/ergast/f1`) — standings/results, via `lib/jolpica.ts`
+- `vitest` (dev) — unit tests
+- Jolpica F1 API (`https://api.jolpi.ca/ergast/f1`) — standings/results/schedule/sprint, via `lib/jolpica.ts`
 - OpenF1 API (`https://api.openf1.org/v1`) — car/telemetry data, via `lib/openf1.ts`
 
 <!-- MANUAL: Custom project notes can be added below -->
