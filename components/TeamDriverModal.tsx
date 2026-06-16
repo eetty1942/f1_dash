@@ -10,10 +10,12 @@ import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 // team grid → driver headshots → onSelect. The current favorite is highlighted.
 export default function TeamDriverModal({
   current,
+  season,
   onClose,
   onSelect,
 }: {
   current: Favorite;
+  season: string;
   onClose: () => void;
   onSelect: (fav: Favorite) => void;
 }) {
@@ -23,7 +25,10 @@ export default function TeamDriverModal({
 
   useEffect(() => {
     let active = true;
-    fetch("/api/options")
+    setOptions(null);
+    setError(null);
+    setTeam(null);
+    fetch(`/api/options?season=${season}`)
       .then((res) => {
         if (!res.ok) throw new Error("옵션을 불러오지 못했습니다.");
         return res.json();
@@ -33,7 +38,7 @@ export default function TeamDriverModal({
     return () => {
       active = false;
     };
-  }, []);
+  }, [season]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -116,7 +121,7 @@ export default function TeamDriverModal({
                     }
                   >
                     <div className="flex h-12 items-center justify-center">
-                      <TeamLogoImg team={t} />
+                      <TeamLogoImg team={t} season={season} />
                     </div>
                     <span className="text-center text-[11px] font-semibold text-zinc-300 group-hover:text-foreground">
                       {t.name}
@@ -164,6 +169,7 @@ export default function TeamDriverModal({
                           constructorId={team.constructorId}
                           name={d.name}
                           accent={accent}
+                          season={season}
                           className="h-full w-full transition group-hover:scale-105"
                         />
                         <span
@@ -190,9 +196,9 @@ export default function TeamDriverModal({
 }
 
 // Team logo (official white wordmark) with a team-coloured initials fallback.
-function TeamLogoImg({ team }: { team: TeamOption }) {
+function TeamLogoImg({ team, season }: { team: TeamOption; season?: string }) {
   const [failed, setFailed] = useState(false);
-  const src = teamLogo(team.constructorId);
+  const src = teamLogo(team.constructorId, season);
 
   if (src && !failed) {
     return (

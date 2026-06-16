@@ -7,20 +7,24 @@ import Intro from "@/components/Intro";
 import Selector from "@/components/Selector";
 import TeamDriverModal from "@/components/TeamDriverModal";
 import type { TabKey } from "@/components/Dashboard";
-import { SEASON, teamColor } from "@/lib/season";
-import { FAVORITE_KEY, type Favorite } from "@/lib/types";
+import { SEASON, availableSeasons, resolveSeason, teamColor } from "@/lib/season";
+import { FAVORITE_KEY, SEASON_KEY, type Favorite } from "@/lib/types";
 
 type Phase = "intro" | "select" | "dashboard";
+
+const SEASONS = availableSeasons();
 
 export default function Home() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [favorite, setFavorite] = useState<Favorite | null>(null);
+  const [season, setSeasonState] = useState<string>(SEASON);
   const [ready, setReady] = useState(false);
   const [changeOpen, setChangeOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>("results");
 
   // Returning visitors with a saved favorite skip the intro and go straight to
-  // their dashboard; first-time visitors see the intro.
+  // their dashboard; first-time visitors see the intro. Restore the last-used
+  // season too (validated against the current selectable window).
   useEffect(() => {
     try {
       const raw = localStorage.getItem(FAVORITE_KEY);
@@ -28,11 +32,21 @@ export default function Home() {
         setFavorite(JSON.parse(raw) as Favorite);
         setPhase("dashboard");
       }
+      setSeasonState(resolveSeason(localStorage.getItem(SEASON_KEY)));
     } catch {
       // ignore malformed storage
     }
     setReady(true);
   }, []);
+
+  function setSeason(next: string) {
+    setSeasonState(next);
+    try {
+      localStorage.setItem(SEASON_KEY, next);
+    } catch {
+      // ignore storage failures (e.g. private mode)
+    }
+  }
 
   function select(fav: Favorite) {
     localStorage.setItem(FAVORITE_KEY, JSON.stringify(fav));
@@ -63,6 +77,9 @@ export default function Home() {
       <AppShell
         accent={teamColor(favorite.constructorId)}
         onHome={goHome}
+        season={season}
+        seasons={SEASONS}
+        onSeasonChange={setSeason}
         right={
           <button
             onClick={() => setChangeOpen(true)}
@@ -72,10 +89,16 @@ export default function Home() {
           </button>
         }
       >
-        <Dashboard favorite={favorite} tab={tab} onTabChange={setTab} />
+        <Dashboard
+          favorite={favorite}
+          season={season}
+          tab={tab}
+          onTabChange={setTab}
+        />
         {changeOpen && (
           <TeamDriverModal
             current={favorite}
+            season={season}
             onClose={() => setChangeOpen(false)}
             onSelect={select}
           />
@@ -85,8 +108,8 @@ export default function Home() {
   }
 
   return (
-    <AppShell>
-      <Selector onSelect={select} />
+    <AppShell season={season} seasons={SEASONS} onSeasonChange={setSeason}>
+      <Selector season={season} onSelect={select} />
     </AppShell>
   );
 }

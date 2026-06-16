@@ -1,21 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   getConstructorStandings,
   getDriverStandings,
   getSchedule,
   type Race,
 } from "@/lib/jolpica";
-import { SEASON } from "@/lib/season";
+import { SEASON, resolveSeason } from "@/lib/season";
 
-// Returns the teams and drivers available for selection in the current season,
-// plus season-wide round progress (shown on the team-selection page).
-export async function GET() {
+// Returns the teams and drivers available for selection in the requested season
+// (defaults to the current season). Round progress is always reported for the
+// *current* season — past seasons are already complete, so their progress is
+// meaningless and the selection page keeps showing this year's real progress.
+export async function GET(request: NextRequest) {
+  const season = resolveSeason(request.nextUrl.searchParams.get("season"));
+
   try {
-    const [driverStandings, constructorStandings, schedule] = await Promise.all([
-      getDriverStandings(SEASON),
-      getConstructorStandings(SEASON),
-      getSchedule(SEASON),
-    ]);
+    const [driverStandings, constructorStandings, progressSchedule] =
+      await Promise.all([
+        getDriverStandings(season),
+        getConstructorStandings(season),
+        // Progress is pinned to the current season regardless of `season`.
+        getSchedule(SEASON),
+      ]);
 
     const teams = constructorStandings.map((cs) => {
       const drivers = driverStandings
@@ -38,10 +44,10 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      season: SEASON,
+      season,
       teams,
-      completedRounds: countCompletedRounds(schedule),
-      totalRounds: schedule.length,
+      completedRounds: countCompletedRounds(progressSchedule),
+      totalRounds: progressSchedule.length,
     });
   } catch (err) {
     return NextResponse.json(

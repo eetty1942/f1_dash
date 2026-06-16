@@ -1,5 +1,10 @@
 // Shapes returned by the dashboard's own API routes, shared by client UI.
-import type { ConstructorStanding, DriverStanding, Race } from "@/lib/jolpica";
+import type {
+  Constructor,
+  ConstructorStanding,
+  DriverStanding,
+  Race,
+} from "@/lib/jolpica";
 
 export interface TeamOption {
   constructorId: string;
@@ -19,6 +24,9 @@ export interface DashboardResponse {
   season: string;
   driverStanding: DriverStanding | null;
   constructorStanding: ConstructorStanding | null;
+  // The driver's actual constructor for THIS season (resolved from standings),
+  // which may differ from the saved favorite's team in other seasons.
+  driverConstructor: Constructor | null;
   results: Race[];
   nextRace: Race | null;
   completedRounds: number;
@@ -79,3 +87,6 @@ export interface Favorite {
 }
 
 export const FAVORITE_KEY = "f1dash.favorite";
+
+// The user's last-selected season (header dropdown), persisted in localStorage.
+export const SEASON_KEY = "f1dash.season";

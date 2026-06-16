@@ -1,26 +1,58 @@
 "use client";
 
-import { TriangleAlert, X } from "lucide-react";
-import { type CSSProperties, useEffect, useState } from "react";
+import {
+  CalendarDays,
+  GitCompareArrows,
+  Info,
+  TriangleAlert,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  type CSSProperties,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import Banner, { type BannerItem } from "@/components/Banner";
+import ComingSoonModal from "@/components/ComingSoonModal";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import SeasonProgress from "@/components/SeasonProgress";
 import { teamColor, teamLogo } from "@/lib/season";
 import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 
+// Promo banners shown below the team grid. Today there is one sample; more can
+// be appended and the carousel auto-slides between them.
+const BANNERS: BannerItem[] = [
+  {
+    id: "match",
+    title: "나에게 맞는 팀과 드라이버는?",
+    subtitle: "취향 기반 추천으로 응원할 팀을 찾아보세요",
+  },
+];
+
 // First-run screen: pick a team (logo grid) → a modal lists that team's drivers
 // with their official F1 headshots → choosing one saves the favorite.
 export default function Selector({
+  season,
   onSelect,
 }: {
+  season: string;
   onSelect: (fav: Favorite) => void;
 }) {
   const [options, setOptions] = useState<OptionsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [modalTeam, setModalTeam] = useState<TeamOption | null>(null);
+  // Feature name whose "coming soon" modal is open, or null when closed.
+  const [comingSoon, setComingSoon] = useState<string | null>(null);
+  const teamGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
-    fetch("/api/options")
+    setOptions(null);
+    setError(null);
+    fetch(`/api/options?season=${season}`)
       .then((res) => {
         if (!res.ok) throw new Error("옵션을 불러오지 못했습니다.");
         return res.json();
@@ -30,7 +62,7 @@ export default function Selector({
     return () => {
       active = false;
     };
-  }, []);
+  }, [season]);
 
   if (error) {
     return (
@@ -64,7 +96,10 @@ export default function Selector({
         />
       </div>
 
-      <div className="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4">
+      <div
+        ref={teamGridRef}
+        className="mt-8 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4"
+      >
         {options.teams.map((t) => (
           <button
             key={t.constructorId}
@@ -72,7 +107,7 @@ export default function Selector({
             className="group flex flex-col items-center gap-3 transition hover:-translate-y-1"
           >
             <div className="flex h-16 items-center justify-center">
-              <TeamLogo team={t} />
+              <TeamLogo team={t} season={season} />
             </div>
             <span className="text-center text-xs font-semibold text-zinc-300 group-hover:text-foreground">
               {t.name}
@@ -81,9 +116,58 @@ export default function Selector({
         ))}
       </div>
 
+      {/* Promo banner — auto-sliding; tapping opens a "coming soon" modal. */}
+      <div className="mt-8">
+        <Banner
+          items={BANNERS}
+          onItemClick={(item) => setComingSoon(item.title)}
+        />
+      </div>
+
+      {/* Bottom feature launcher. 팀/상세정보 is the live flow (scrolls to the
+          team grid); the rest are placeholders that open a "coming soon" modal. */}
+      <div className="mt-8">
+        <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+          더 보기
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <FeatureCard
+            icon={Info}
+            label="팀/상세정보"
+            active
+            onClick={() =>
+              teamGridRef.current?.scrollIntoView({ behavior: "smooth" })
+            }
+          />
+          <FeatureCard
+            icon={CalendarDays}
+            label="일정"
+            onClick={() => setComingSoon("일정")}
+          />
+          <FeatureCard
+            icon={Users}
+            label="선수 비교"
+            onClick={() => setComingSoon("선수 비교")}
+          />
+          <FeatureCard
+            icon={GitCompareArrows}
+            label="컨스트럭터 비교"
+            onClick={() => setComingSoon("컨스트럭터 비교")}
+          />
+        </div>
+      </div>
+
+      {comingSoon && (
+        <ComingSoonModal
+          title={comingSoon}
+          onClose={() => setComingSoon(null)}
+        />
+      )}
+
       {modalTeam && (
         <DriverModal
           team={modalTeam}
+          season={season}
           onClose={() => setModalTeam(null)}
           onPick={(d) =>
             onSelect({
@@ -101,10 +185,12 @@ export default function Selector({
 
 function DriverModal({
   team,
+  season,
   onClose,
   onPick,
 }: {
   team: TeamOption;
+  season: string;
   onClose: () => void;
   onPick: (d: TeamOption["drivers"][number]) => void;
 }) {
@@ -131,7 +217,7 @@ function DriverModal({
           className="team-glow flex items-center justify-between border-b border-line px-5 py-4"
         >
           <div className="flex items-center gap-3">
-            <TeamLogo team={team} small />
+            <TeamLogo team={team} season={season} small />
             <div>
               <p className="text-[11px] uppercase tracking-wide text-muted">
                 드라이버 선택
@@ -173,6 +259,7 @@ function DriverModal({
                       constructorId={team.constructorId}
                       name={d.name}
                       accent={accent}
+                      season={season}
                       className="h-full w-full transition group-hover:scale-105"
                     />
                     <span
@@ -198,6 +285,34 @@ function DriverModal({
   );
 }
 
+// One entry in the bottom feature launcher. `active` marks the live feature
+// (team/detail) with the team accent; others are muted placeholders.
+function FeatureCard({
+  icon: Icon,
+  label,
+  active = false,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group flex flex-col items-center gap-2 rounded-xl border border-line bg-surface px-3 py-4 text-center transition hover:-translate-y-0.5 hover:border-zinc-600"
+    >
+      <Icon
+        className={`h-5 w-5 ${active ? "text-team" : "text-muted group-hover:text-zinc-200"}`}
+      />
+      <span className="text-xs font-semibold text-zinc-300 group-hover:text-foreground">
+        {label}
+      </span>
+    </button>
+  );
+}
+
 function SelectorSkeleton() {
   return (
     <div className="mx-auto w-full max-w-3xl animate-pulse">
@@ -214,9 +329,17 @@ function SelectorSkeleton() {
 
 // Team logo (official white wordmark). Falls back to a team-coloured initials
 // badge for unknown teams or load failures.
-function TeamLogo({ team, small = false }: { team: TeamOption; small?: boolean }) {
+function TeamLogo({
+  team,
+  season,
+  small = false,
+}: {
+  team: TeamOption;
+  season?: string;
+  small?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
-  const src = teamLogo(team.constructorId);
+  const src = teamLogo(team.constructorId, season);
   const size = small ? "max-h-8" : "max-h-12";
 
   if (src && !failed) {

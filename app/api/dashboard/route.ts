@@ -6,13 +6,14 @@ import {
   getSchedule,
   type Race,
 } from "@/lib/jolpica";
-import { SEASON } from "@/lib/season";
+import { resolveSeason } from "@/lib/season";
 
 // Aggregates everything the dashboard needs for one favorite team + driver:
 // their standings, the driver's per-race results, and the next upcoming race.
 export async function GET(request: NextRequest) {
   const driverId = request.nextUrl.searchParams.get("driver");
   const constructorId = request.nextUrl.searchParams.get("team");
+  const season = resolveSeason(request.nextUrl.searchParams.get("season"));
 
   if (!driverId || !constructorId) {
     return NextResponse.json(
@@ -24,23 +25,32 @@ export async function GET(request: NextRequest) {
   try {
     const [driverStandings, constructorStandings, driverResults, schedule] =
       await Promise.all([
-        getDriverStandings(SEASON),
-        getConstructorStandings(SEASON),
-        getDriverResults(SEASON, driverId),
-        getSchedule(SEASON),
+        getDriverStandings(season),
+        getConstructorStandings(season),
+        getDriverResults(season, driverId),
+        getSchedule(season),
       ]);
 
     const driverStanding =
       driverStandings.find((d) => d.Driver.driverId === driverId) ?? null;
+
+    // The driver's real team for this season comes from the standings (last
+    // constructor if they switched mid-season). Fall back to the requested
+    // `team` only when the driver has no standing yet.
+    const driverConstructor =
+      driverStanding?.Constructors?.at(-1) ?? null;
+    const resolvedConstructorId =
+      driverConstructor?.constructorId ?? constructorId;
     const constructorStanding =
       constructorStandings.find(
-        (c) => c.Constructor.constructorId === constructorId,
+        (c) => c.Constructor.constructorId === resolvedConstructorId,
       ) ?? null;
 
     return NextResponse.json({
-      season: SEASON,
+      season,
       driverStanding,
       constructorStanding,
+      driverConstructor,
       results: driverResults,
       nextRace: findNextRace(schedule),
       completedRounds: countCompletedRounds(schedule),

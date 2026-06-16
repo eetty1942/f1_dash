@@ -2,6 +2,7 @@
 
 import {
   BarChart3,
+  CalendarX,
   Car,
   CloudSun,
   Disc3,
@@ -12,7 +13,7 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import DriverHeadshot from "@/components/DriverHeadshot";
 import SeasonCharts from "@/components/SeasonCharts";
 import type { Driver } from "@/lib/jolpica";
@@ -23,10 +24,12 @@ export type TabKey = "results" | "car" | "charts";
 
 export default function Dashboard({
   favorite,
+  season,
   tab,
   onTabChange,
 }: {
   favorite: Favorite;
+  season: string;
   tab: TabKey;
   onTabChange: (t: TabKey) => void;
 }) {
@@ -40,6 +43,7 @@ export default function Dashboard({
     const params = new URLSearchParams({
       driver: favorite.driverId,
       team: favorite.constructorId,
+      season,
     });
     fetch(`/api/dashboard?${params}`)
       .then((res) => {
@@ -51,27 +55,48 @@ export default function Dashboard({
     return () => {
       active = false;
     };
-  }, [favorite.driverId, favorite.constructorId]);
+  }, [favorite.driverId, favorite.constructorId, season]);
 
-  const accent = teamColor(favorite.constructorId);
   const ds = data?.driverStanding ?? null;
   const cs = data?.constructorStanding ?? null;
+  // The driver's real team for the viewed season (e.g. Pérez → Red Bull in
+  // 2024). Falls back to the saved favorite before data arrives.
+  const seasonConstructorId =
+    data?.driverConstructor?.constructorId ?? favorite.constructorId;
+  const seasonTeamName =
+    data?.driverConstructor?.name ?? favorite.teamName;
+  const accent = teamColor(seasonConstructorId);
+  // Driver has no record in this season (didn't race / not yet entered).
+  const noSeasonData = !!data && !ds && data.results.length === 0;
 
   return (
-    <div className="space-y-5 pb-20 sm:pb-0">
+    <div
+      className="space-y-5 pb-20 sm:pb-0"
+      // Drive all accent styling (--team) from the season-resolved team.
+      style={{ "--team": accent } as CSSProperties}
+    >
       {error && <StateMessage icon={TriangleAlert} tone="error" text={error} />}
       {!data && !error && <DashboardSkeleton />}
 
-      {data && (
+      {noSeasonData && (
+        <StateMessage
+          icon={CalendarX}
+          tone="muted"
+          text={`${favorite.driverName} 선수는 ${season} 시즌 참가 기록이 없습니다. 다른 시즌을 선택해 보세요.`}
+        />
+      )}
+
+      {data && !noSeasonData && (
         <>
           <section className="team-glow rise-in overflow-hidden rounded-2xl border border-line p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div className="flex items-center gap-4">
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl">
                   <DriverHeadshot
-                    constructorId={favorite.constructorId}
+                    constructorId={seasonConstructorId}
                     name={favorite.driverName}
                     accent={accent}
+                    season={season}
                     className="h-full w-full"
                   />
                   {ds?.Driver.permanentNumber ? (
@@ -88,7 +113,7 @@ export default function Dashboard({
                     {favorite.driverName}
                   </h1>
                   <p className="mt-1 text-sm text-muted">
-                    {favorite.teamName}
+                    {seasonTeamName}
                     {ds?.Driver.nationality ? ` · ${ds.Driver.nationality}` : ""}
                   </p>
                 </div>
@@ -150,7 +175,8 @@ export default function Dashboard({
             <div className="rise-in">
               <CarPanel
                 ergDriver={ds?.Driver ?? null}
-                constructorId={favorite.constructorId}
+                constructorId={seasonConstructorId}
+                season={season}
                 accent={accent}
               />
             </div>
@@ -176,10 +202,12 @@ export default function Dashboard({
 function CarPanel({
   ergDriver,
   constructorId,
+  season,
   accent,
 }: {
   ergDriver: Driver | null;
   constructorId: string;
+  season: string;
   accent: string;
 }) {
   const code = ergDriver?.code ?? null;
@@ -250,10 +278,10 @@ function CarPanel({
                   : ""}
               </p>
             </div>
-            {teamCar(constructorId) ? (
+            {teamCar(constructorId, season) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={teamCar(constructorId)!}
+                src={teamCar(constructorId, season)!}
                 alt={`${car.driver.teamName ?? ""} 차량`}
                 className="h-14 w-auto max-w-[48%] shrink-0 object-contain sm:h-16"
               />
