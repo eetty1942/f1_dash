@@ -20,8 +20,7 @@ app's own `/api/*` routes (via the `useFetch` hook in `@/lib/useFetch`).
 | `Selector.tsx` | Selection page **and in-page view switcher**: the bottom feature bar swaps `teams` / `schedule` (`ScheduleView`) / `driver-cmp` (`CompareView`) / `constructor-cmp` (`CompareTeamsView`) views (tab-like, exported `ViewKey`). Team grid → `DriverModal`. Also hosts the auto-sliding `Banner` |
 | `Dashboard.tsx` | Fetches `/api/dashboard` for the favorite + `season`; renders the **season-resolved team** (headshot/car/logo/accent) hero, stat tiles, and `성적`/`차량`/`차트` tabs (`CarPanel` uses season-accurate OpenF1). Floating `[+ 다른 드라이버와 비교]` opens `OneVsOne`. Empty state when the driver didn't race that season |
 | `SeasonCharts.tsx` | Recharts single-driver trend charts derived from the dashboard `results` (no extra API calls) |
-| `Banner.tsx` | Auto-sliding (2.5s) promo carousel below the team grid; tapping a slide bubbles up (currently a "준비중" `ComingSoonModal`) |
-| `ComingSoonModal.tsx` | Reusable "준비중입니다" dialog |
+| `Banner.tsx` | Auto-sliding (2.5s) promo carousel below the team grid; a slide with `href` is an external hyperlink (opens a new tab), else bubbles up via `onItemClick` |
 | `ScheduleView.tsx` / `DotMap.tsx` | Schedule view: a self-generated **dotted world map** (`/dotmap/world-dots.json`) with status-coloured round markers (past=green/next=pulse/upcoming=dim) + pin-anchored info popover, and a synced round list |
 | `CompareView.tsx` | Per-season driver comparison: cumulative-points line + finishing-position & points scatters + toggleable driver chips (top 8 default). Chip `↗` opens the driver detail page |
 | `CompareTeamsView.tsx` | Per-season constructor comparison: rich summary table + cumulative line + scatter; row `›` opens an inline team detail panel; `⚔` opens `TeamVsTeam` |

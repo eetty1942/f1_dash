@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { type CSSProperties, useEffect, useState } from "react";
 import Banner, { type BannerItem } from "@/components/Banner";
-import ComingSoonModal from "@/components/ComingSoonModal";
 import CompareTeamsView from "@/components/CompareTeamsView";
 import CompareView from "@/components/CompareView";
 import ScheduleView from "@/components/ScheduleView";
@@ -26,8 +25,9 @@ import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 const BANNERS: BannerItem[] = [
   {
     id: "match",
-    title: "나에게 맞는 팀과 드라이버는?",
-    subtitle: "취향 기반 추천으로 응원할 팀을 찾아보세요",
+    title: "나에게 맞는 드라이버는?",
+    subtitle: "퀴즈로 나와 잘 맞는 F1 드라이버를 찾아보세요",
+    href: "https://f1-driver-quiz.vercel.app",
   },
 ];
 
@@ -60,8 +60,6 @@ export default function Selector({
     "옵션을 불러오지 못했습니다.",
   );
   const [modalTeam, setModalTeam] = useState<TeamOption | null>(null);
-  // Feature name whose "coming soon" modal is open, or null when closed.
-  const [comingSoon, setComingSoon] = useState<string | null>(null);
   // Which in-page view the bottom feature bar has switched to.
   const [view, setView] = useState<ViewKey>(initialView);
 
@@ -124,12 +122,9 @@ export default function Selector({
             ))}
           </div>
 
-          {/* Promo banner — auto-sliding; tapping opens a "coming soon" modal. */}
+          {/* Promo banner — auto-sliding; the slide is an external hyperlink. */}
           <div className="mt-8">
-            <Banner
-              items={BANNERS}
-              onItemClick={(item) => setComingSoon(item.title)}
-            />
+            <Banner items={BANNERS} />
           </div>
         </>
       )}
@@ -188,13 +183,6 @@ export default function Selector({
           />
         </div>
       </div>
-
-      {comingSoon && (
-        <ComingSoonModal
-          title={comingSoon}
-          onClose={() => setComingSoon(null)}
-        />
-      )}
 
       {modalTeam && (
         <DriverModal

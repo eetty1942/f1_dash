@@ -1,24 +1,25 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export interface BannerItem {
   id: string;
   title: string;
   subtitle?: string;
+  // When set, the slide is an external hyperlink (opens in a new tab); otherwise
+  // tapping bubbles up via `onItemClick`.
+  href?: string;
 }
 
 // Promo banner shown below the team grid. When more than one item exists it
 // auto-advances left→right every 2.5s and exposes prev/next arrows + dots.
-// Tapping the active slide bubbles up via `onItemClick` (the parent shows a
-// "coming soon" modal for now).
 export default function Banner({
   items,
   onItemClick,
 }: {
   items: BannerItem[];
-  onItemClick: (item: BannerItem) => void;
+  onItemClick?: (item: BannerItem) => void;
 }) {
   const [index, setIndex] = useState(0);
   const count = items.length;
@@ -38,32 +39,47 @@ export default function Banner({
   const active = items[index];
   const go = (next: number) => setIndex(((next % count) + count) % count);
 
+  const cls =
+    "team-glow group flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition sm:px-6";
+  const inner = (
+    <>
+      <div className="flex items-center gap-4">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-elevated text-team">
+          <Sparkles className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-display text-base font-bold leading-tight sm:text-lg">
+            {active.title}
+          </p>
+          {active.subtitle ? (
+            <p className="mt-0.5 truncate text-sm text-muted">
+              {active.subtitle}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-muted transition group-hover:text-foreground sm:flex">
+        {active.href ? "바로가기" : "자세히 보기"}
+        {active.href ? (
+          <ExternalLink className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+      </span>
+    </>
+  );
+
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-line">
-      <button
-        onClick={() => onItemClick(active)}
-        className="team-glow group flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition sm:px-6"
-      >
-        <div className="flex items-center gap-4">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-elevated text-team">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="font-display text-base font-bold leading-tight sm:text-lg">
-              {active.title}
-            </p>
-            {active.subtitle ? (
-              <p className="mt-0.5 truncate text-sm text-muted">
-                {active.subtitle}
-              </p>
-            ) : null}
-          </div>
-        </div>
-        <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-muted transition group-hover:text-foreground sm:flex">
-          자세히 보기
-          <ChevronRight className="h-4 w-4" />
-        </span>
-      </button>
+      {active.href ? (
+        <a href={active.href} target="_blank" rel="noopener noreferrer" className={cls}>
+          {inner}
+        </a>
+      ) : (
+        <button onClick={() => onItemClick?.(active)} className={cls}>
+          {inner}
+        </button>
+      )}
 
       {count > 1 && (
         <>
