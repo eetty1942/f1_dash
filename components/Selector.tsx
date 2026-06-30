@@ -20,14 +20,20 @@ import { teamColor, teamLogo } from "@/lib/season";
 import { useFetch } from "@/lib/useFetch";
 import type { Favorite, OptionsResponse, TeamOption } from "@/lib/types";
 
-// Promo banners shown below the team grid. Today there is one sample; more can
-// be appended and the carousel auto-slides between them.
+// Promo banners shown below the team grid; the carousel auto-slides between
+// them. A slide with `href` is an external link; one without bubbles up via
+// `onItemClick` (e.g. the in-app F1 guide page).
 const BANNERS: BannerItem[] = [
   {
     id: "match",
     title: "나에게 맞는 드라이버는?",
     subtitle: "퀴즈로 나와 잘 맞는 F1 드라이버를 찾아보세요",
     href: "https://f1-driver-quiz.vercel.app",
+  },
+  {
+    id: "guide",
+    title: "F1이 처음이신가요?",
+    subtitle: "기본 규칙과 2026 달라진 규정을 한눈에 — F1 입문 가이드",
   },
 ];
 
@@ -48,12 +54,15 @@ export default function Selector({
   initialView = "teams",
   onSelect,
   onDriverDetail,
+  onGuide,
 }: {
   season: string;
   initialView?: ViewKey;
   onSelect: (fav: Favorite) => void;
   // Navigate to a driver's detail page, remembering the comparison origin.
   onDriverDetail?: (fav: Favorite) => void;
+  // Open the in-app F1 guide page (triggered by the guide promo banner).
+  onGuide?: () => void;
 }) {
   const { data: options, error } = useFetch<OptionsResponse>(
     `/api/options?season=${season}`,
@@ -124,7 +133,7 @@ export default function Selector({
 
           {/* Promo banner — auto-sliding; the slide is an external hyperlink. */}
           <div className="mt-8">
-            <Banner items={BANNERS} />
+            <Banner items={BANNERS} onItemClick={(it) => it.id === "guide" && onGuide?.()} />
           </div>
         </>
       )}

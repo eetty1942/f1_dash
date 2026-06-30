@@ -14,6 +14,8 @@ export interface BannerItem {
 
 // Promo banner shown below the team grid. When more than one item exists it
 // auto-advances left→right every 2.5s and exposes prev/next arrows + dots.
+// All slides sit side-by-side in a flex track that slides via translateX for a
+// smooth horizontal transition; only the active slide is interactive/focusable.
 export default function Banner({
   items,
   onItemClick,
@@ -36,50 +38,77 @@ export default function Banner({
 
   if (count === 0) return null;
 
-  const active = items[index];
   const go = (next: number) => setIndex(((next % count) + count) % count);
 
   const cls =
-    "team-glow group flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition sm:px-6";
-  const inner = (
-    <>
-      <div className="flex items-center gap-4">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-elevated text-team">
-          <Sparkles className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="font-display text-base font-bold leading-tight sm:text-lg">
-            {active.title}
-          </p>
-          {active.subtitle ? (
-            <p className="mt-0.5 truncate text-sm text-muted">
-              {active.subtitle}
-            </p>
-          ) : null}
-        </div>
-      </div>
-      <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-muted transition group-hover:text-foreground sm:flex">
-        {active.href ? "바로가기" : "자세히 보기"}
-        {active.href ? (
-          <ExternalLink className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-      </span>
-    </>
-  );
+    "team-glow group flex h-full w-full items-center justify-between gap-4 px-5 py-5 text-left transition sm:px-6";
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-line">
-      {active.href ? (
-        <a href={active.href} target="_blank" rel="noopener noreferrer" className={cls}>
-          {inner}
-        </a>
-      ) : (
-        <button onClick={() => onItemClick?.(active)} className={cls}>
-          {inner}
-        </button>
-      )}
+      <div
+        className="flex transition-transform duration-[1500ms] ease-out motion-reduce:transition-none"
+        style={{ transform: `translateX(-${index * 100}%)` }}
+      >
+        {items.map((item, i) => {
+          const active = i === index;
+          const tabIndex = active ? 0 : -1;
+          const inner = (
+            <>
+              <div className="flex items-center gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-elevated text-team">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-base font-bold leading-tight sm:text-lg">
+                    {item.title}
+                  </p>
+                  {item.subtitle ? (
+                    <p className="mt-0.5 truncate text-sm text-muted">
+                      {item.subtitle}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-muted transition group-hover:text-foreground sm:flex">
+                {item.href ? "바로가기" : "자세히 보기"}
+                {item.href ? (
+                  <ExternalLink className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </span>
+            </>
+          );
+
+          return (
+            <div
+              key={item.id}
+              className="w-full shrink-0"
+              aria-hidden={!active}
+            >
+              {item.href ? (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  tabIndex={tabIndex}
+                  className={cls}
+                >
+                  {inner}
+                </a>
+              ) : (
+                <button
+                  onClick={() => onItemClick?.(item)}
+                  tabIndex={tabIndex}
+                  className={cls}
+                >
+                  {inner}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {count > 1 && (
         <>

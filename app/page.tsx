@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import Dashboard from "@/components/Dashboard";
+import Guide from "@/components/Guide";
 import Intro from "@/components/Intro";
 import Selector, { type ViewKey } from "@/components/Selector";
 import TeamDriverModal from "@/components/TeamDriverModal";
@@ -11,7 +12,7 @@ import type { TabKey } from "@/components/Dashboard";
 import { SEASON, availableSeasons, resolveSeason, teamColor } from "@/lib/season";
 import { FAVORITE_KEY, SEASON_KEY, type Favorite } from "@/lib/types";
 
-type Phase = "intro" | "select" | "dashboard";
+type Phase = "intro" | "select" | "dashboard" | "guide";
 
 const SEASONS = availableSeasons();
 
@@ -145,6 +146,19 @@ export default function Home() {
     );
   }
 
+  if (phase === "guide") {
+    return (
+      <AppShell season={season} seasons={SEASONS} onSeasonChange={setSeason} onHome={goHome}>
+        <Guide
+          onBack={() => {
+            setPhase("select");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell season={season} seasons={SEASONS} onSeasonChange={setSeason}>
       <Selector
@@ -152,6 +166,10 @@ export default function Home() {
         initialView={selectorView}
         onSelect={select}
         onDriverDetail={selectFromCompare}
+        onGuide={() => {
+          setPhase("guide");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
       />
     </AppShell>
   );
